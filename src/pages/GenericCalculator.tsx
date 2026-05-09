@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { db } from '../services/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../components/ui';
 import { ArrowLeft, Save, ShieldAlert, CheckCircle2, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import { PdfExportButton } from '../components/PdfExportButton';
 export function GenericCalculator() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { preferences, addRecentCalculator, saveCalculation, activeProjectId } = useAppStore();
+  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, user } = useAppStore();
   
   const calcDef = CALCULATORS_REGISTRY[id || ''];
   
@@ -28,17 +30,27 @@ export function GenericCalculator() {
     executeCalculation();
   };
 
-  const handleCommit = () => {
+  const handleCommit = async () => {
     if (!result || !id) return;
-    saveCalculation({
-        id: crypto.randomUUID(),
+    const calcData = {
         projectId: activeProjectId,
         calculatorKey: id,
         title: `${calcDef.title} ${new Date().toLocaleTimeString()}`,
         date: Date.now(),
-        result: result
-    });
-    alert('Mathematical output committed to local ledger.');
+        result: result,
+        ownerId: user?.uid
+    };
+    
+    try {
+      if (user) {
+        await addDoc(collection(db, 'calculations'), calcData);
+      }
+      saveCalculation({ ...calcData, id: crypto.randomUUID() } as any);
+      alert('Mathematical output committed to global ledger.');
+    } catch (error) {
+      console.error("Cloud save failed:", error);
+      alert('Local commit successful, cloud sync pending.');
+    }
   };
 
   useEffect(() => {

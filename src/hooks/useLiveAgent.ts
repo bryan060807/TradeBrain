@@ -5,6 +5,8 @@ import { float32To16BitPCM, base64EncodeAudio, AudioStreamStreamer } from '../li
 import { useAppStore } from '../store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 import { CALCULATORS_REGISTRY } from '../lib/calculators/registry';
+import { db } from '../services/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Define the voice name to use
 type VoiceName = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr';
@@ -21,7 +23,7 @@ export function useLiveAgent() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   
-  const { preferences, addProject, updatePreferences, activeProjectId, knowledgeBase, savedCalculations } = useAppStore();
+  const { preferences, addProject, updatePreferences, activeProjectId, knowledgeBase, savedCalculations, user, projects } = useAppStore();
   const navigate = useNavigate();
 
   const selectedVoice = preferences.aiVoice || 'Zephyr';
@@ -46,6 +48,8 @@ export function useLiveAgent() {
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
       
+      const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
+
       // Build function declarations
       const openCalculatorDecl: FunctionDeclaration = {
         name: "openCalculator",
@@ -111,22 +115,42 @@ export function useLiveAgent() {
         }
       };
 
-      const systemInstruction = `You are a helpful, human-like voice assistant for a construction toolkit application called 'TradeBrain'.
-Context:
-Active Project ID: ${activeProjectId}
-Preferences: ${JSON.stringify(preferences)}
-Knowledge bank size: ${knowledgeBase.length} items.
-Recent calculations: ${JSON.stringify(savedCalculations.slice(0, 5))}
+      const postMessageDecl: FunctionDeclaration = {
+        name: "postMessage",
+        description: "Post a message to the company-wide chat or message board",
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            text: { type: Type.STRING, description: "The content of the message" }
+          },
+          required: ["text"]
+        }
+      };
 
-Available calculators: stairRiseRun, ${Object.keys(CALCULATORS_REGISTRY).join(', ')}.
+      const systemInstruction = `You are 'TradeBrain Intelligence', a highly sophisticated and responsive AI Construction Foreman.
+Your primary directive is to provide mission-critical construction support and field intelligence.
+Identity: You are the digital backbone of the jobsite. Your tone is professional, technical, authoritative, and efficient.
+Operational Context:
+- Active Project: ${activeProject?.name || 'Global Ops'}
+- Current Foreman: ${user?.displayName} (Role: ${user?.role})
+- Safety Protocol: Always prioritize structural integrity and local code compliance.
 
-When asked about a specific construction plan, document, or knowledge base item, ALWAYS use the 'searchKnowledgeBank' tool to search for it first.
-You can help users with calculations, search for internet references, save projects, change settings, and navigate the app. Use the provided tools.
-Provide concise and natural conversational responses suitable for voice. Keep responses short and to the point.
+Capabilities:
+1. Mathematical Execution: You can trigger specialized calculators for stairs, rafters, joists, etc.
+2. Knowledge Retrieval: You have access to ${knowledgeBase.length} site-specific blueprints and documents.
+3. Site Coordination: You can post messages to the company board to alert crew members.
+4. Logistics: You can create projects and update system baselines.
+
+Guidelines:
+- Be concise. Site workers need answers fast.
+- If a calculation is requested, confirm the inputs and trigger the 'executeAction' tool with 'calculate'.
+- Always check the knowledge base if a user asks about site-specific plans.
+- If the user asks for a 'share link' or 'public access', inform them that the application is a secure enterprise portal available at its current URL.
+- Maintain a 'Real-World First' mindset. Your advice should be practical for a physical construction environment.
 `;
 
       const sessionPromise = ai.live.connect({
-        model: "gemini-3.1-flash-live-preview",
+        model: "gemini-2.0-flash-exp", // Using latest if available or 1.5 flash
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
@@ -135,7 +159,14 @@ Provide concise and natural conversational responses suitable for voice. Keep re
           systemInstruction,
           tools: [
             { googleSearch: {} },
-            { functionDeclarations: [openCalculatorDecl, createProjectDecl, changeSettingsDecl, executeActionDecl, searchKnowledgeBankDecl] }
+            { functionDeclarations: [
+              openCalculatorDecl, 
+              createProjectDecl, 
+              changeSettingsDecl, 
+              executeActionDecl, 
+              searchKnowledgeBankDecl,
+              postMessageDecl
+            ] }
           ],
           inputAudioTranscription: {  },
           outputAudioTranscription: {  }
@@ -226,6 +257,19 @@ Provide concise and natural conversational responses suitable for voice. Keep re
                     const results = kBase.filter(k => k.title.toLowerCase().includes(query) || k.content.toLowerCase().includes(query))
                                         .map(k => ({ title: k.title, content: k.content.substring(0, 500) })); // Return chunk
                     responseData = { results: results.length > 0 ? results : "No documents found matching the query." };
+                  } else if (call.name === 'postMessage') {
+                    if (user) {
+                      await addDoc(collection(db, 'messages'), {
+                        text: args.text,
+                        senderId: user.uid,
+                        senderName: user.displayName,
+                        senderRole: user.role,
+                        createdAt: serverTimestamp()
+                      });
+                      responseData = { success: true };
+                    } else {
+                      responseData = { error: "User not authenticated" };
+                    }
                   }
                 } catch (err: any) {
                   responseData = { error: err?.message || err || "Unknown error" };
@@ -257,7 +301,7 @@ Provide concise and natural conversational responses suitable for voice. Keep re
       setIsConnecting(false);
       setIsConnected(false);
     }
-  }, [isConnected, isConnecting, activeProjectId, preferences, knowledgeBase, selectedVoice, navigate, addProject, updatePreferences]);
+  }, [isConnected, isConnecting, activeProjectId, preferences, knowledgeBase, selectedVoice, navigate, addProject, updatePreferences, user, projects]);
 
   const disconnect = useCallback(() => {
     setIsConnected(false);

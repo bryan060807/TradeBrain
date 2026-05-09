@@ -1,10 +1,31 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../components/ui';
 import { useAppStore } from '../store/useAppStore';
+import { db } from '../services/firebase';
+import { collection, query, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { Users, Shield, Crown } from 'lucide-react';
 
 export function Settings() {
-  const { preferences, updatePreferences } = useAppStore();
+  const { preferences, updatePreferences, user } = useAppStore();
   const [isSaved, setIsSaved] = React.useState(false);
+  const [roster, setRoster] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (user?.role !== 'owner') return;
+    const q = query(collection(db, 'users'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setRoster(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const changeRole = async (userId: string, newRole: string) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), { role: newRole });
+    } catch (error) {
+      console.error("Failed to update role:", error);
+    }
+  };
 
   const handleUpdate = (key: keyof typeof preferences, value: any) => {
     updatePreferences({ [key]: value });
@@ -151,6 +172,46 @@ export function Settings() {
              </div>
           </CardContent>
         </Card>
+
+        {user?.role === 'owner' && (
+          <Card>
+            <CardHeader className="border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#D4AF37]" />
+                <CardTitle>Company Roster & Role Assignment</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {roster.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#161616] flex items-center justify-center border border-white/10">
+                        {member.role === 'owner' ? <Crown className="w-5 h-5 text-[#D4AF37]" /> : <Shield className="w-5 h-5 text-[#707070]" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{member.displayName || member.email}</p>
+                        <p className="text-[10px] uppercase tracking-widest text-[#707070]">{member.role}</p>
+                      </div>
+                    </div>
+                    
+                    {member.id !== user.uid && (
+                      <select 
+                        className="h-8 rounded-sm border border-white/20 bg-[#0A0A0A] px-2 text-[10px] uppercase tracking-widest text-[#E5E5E5] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                        value={member.role}
+                        onChange={(e) => changeRole(member.id, e.target.value)}
+                      >
+                        <option value="owner">Owner</option>
+                        <option value="foreman">Foreman</option>
+                        <option value="laborer">Laborer</option>
+                      </select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

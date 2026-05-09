@@ -1,6 +1,6 @@
 {
   "name": "TradeBrain",
-  "description": "Mobile-first construction companion that combines calculators, searchable knowledge bank, AI assistance, and project memory.",
+  "description": "Enterprise construction companion with real-time site communication, role-based project management, and AI-powered mathematical audits.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": []
 }

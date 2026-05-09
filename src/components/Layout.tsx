@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Calculator, Folder, Settings, Mic, MicOff, AlertCircle, ExternalLink, Library } from 'lucide-react';
 import { useLiveAgent } from '../hooks/useLiveAgent';
+import { useFirestoreSync } from '../hooks/useFirestoreSync';
 import { Button } from './ui';
 
 export function Layout() {
   const navigate = useNavigate();
+  useFirestoreSync();
   const { 
     isConnected, isConnecting, connect, disconnect, agentResponse, clearAgentResponse, userTranscript 
   } = useLiveAgent();

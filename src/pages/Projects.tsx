@@ -1,40 +1,60 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Button, Label } from '../components/ui';
 import { useAppStore } from '../store/useAppStore';
+import { db } from '../services/firebase';
+import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Folder, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function Projects() {
-  const { projects, activeProjectId, setActiveProject, addProject, deleteProject, savedCalculations, removeCalculation, preferences } = useAppStore();
+  const { projects, activeProjectId, setActiveProject, savedCalculations, removeCalculation, preferences, user } = useAppStore();
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectType, setNewProjectType] = useState(preferences.defaultProjectType || 'Residential');
   const [newLocation, setNewLocation] = useState('');
   const [newScope, setNewScope] = useState('');
   const [newCrewAssigned, setNewCrewAssigned] = useState(preferences.defaultCrewAssigned || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) return;
+    if (!newProjectName.trim() || !user) return;
     
-    const newProject = {
-      id: crypto.randomUUID(),
-      name: newProjectName.trim(),
-      type: newProjectType,
-      location: newLocation,
-      scope: newScope,
-      crewAssigned: newCrewAssigned,
-      createdAt: Date.now(),
-    };
-    
-    addProject(newProject);
-    setActiveProject(newProject.id);
-    
-    // reset form
-    setNewProjectName('');
-    setNewLocation('');
-    setNewScope('');
-    setNewProjectType(preferences.defaultProjectType || 'Residential');
-    setNewCrewAssigned(preferences.defaultCrewAssigned || '');
+    setIsSubmitting(true);
+    try {
+      const docRef = await addDoc(collection(db, 'projects'), {
+        name: newProjectName.trim(),
+        type: newProjectType,
+        location: newLocation,
+        scope: newScope,
+        crewAssigned: newCrewAssigned,
+        createdAt: Date.now(),
+        ownerId: user.uid,
+        status: 'active'
+      });
+      
+      setActiveProject(docRef.id);
+      
+      // reset form
+      setNewProjectName('');
+      setNewLocation('');
+      setNewScope('');
+      setNewProjectType(preferences.defaultProjectType || 'Residential');
+      setNewCrewAssigned(preferences.defaultCrewAssigned || '');
+    } catch (error) {
+      console.error("Error creating project:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this project? This will NOT delete associated calculations for now.")) return;
+    try {
+      await deleteDoc(doc(db, 'projects', id));
+      if (activeProjectId === id) setActiveProject(null);
+    } catch (error) {
+      console.error("Error deleting project:", error);
+    }
   };
 
   return (
@@ -164,7 +184,7 @@ export function Projects() {
                         <CheckCircle className="w-3 h-3" /> Active
                       </span>
                     )}
-                    <Button variant="ghost" className="h-10 w-10 p-0 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center" onClick={() => deleteProject(proj.id)}>
+                    <Button variant="ghost" className="h-10 w-10 p-0 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center" onClick={() => handleDelete(proj.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

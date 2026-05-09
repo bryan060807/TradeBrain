@@ -1,110 +1,99 @@
 {
   "entities": {
-    "Profile": {
-      "title": "Profile",
-      "description": "User profile containing preferences and defaults.",
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and role within the company.",
       "type": "object",
       "properties": {
+        "uid": { "type": "string" },
         "displayName": { "type": "string" },
-        "tradeRole": { "type": "string" },
-        "preferredUnits": { "type": "string" },
-        "preferredFractionDenominator": { "type": "number" },
-        "defaultStudSpacingIn": { "type": "number" },
-        "defaultWastePercent": { "type": "number" },
-        "voiceEnabled": { "type": "boolean" },
-        "userId": { "type": "string" }
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "foreman", "laborer"] },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "number" }
       },
-      "required": ["userId", "preferredUnits"]
+      "required": ["uid", "email", "role"]
     },
-    "Company": {
-      "title": "Company",
-      "description": "A company workspace.",
+    "Message": {
+      "title": "Company Message",
+      "description": "A message posted in the company-wide chat or board.",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "ownerId": { "type": "string" },
-        "defaultUnits": { "type": "string" }
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "projectId": { "type": "string" }
       },
-      "required": ["name", "ownerId"]
-    },
-    "CompanyMembership": {
-      "title": "Company Membership",
-      "description": "Associates a user with a company and a role.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "role": { "type": "string", "enum": ["owner", "admin", "manager", "member", "viewer"] },
-        "status": { "type": "string", "enum": ["invited", "active", "suspended"] }
-      },
-      "required": ["userId", "role", "status"]
+      "required": ["text", "senderId", "createdAt"]
     },
     "Project": {
-      "title": "Project",
-      "description": "A construction project belonging to a company or user.",
+      "title": "Construction Project",
+      "description": "Details about a specific jobsite.",
       "type": "object",
       "properties": {
-        "companyId": { "type": "string" },
-        "ownerId": { "type": "string" },
         "name": { "type": "string" },
-        "status": { "type": "string" },
-        "projectType": { "type": "string" }
+        "type": { "type": "string" },
+        "location": { "type": "string" },
+        "scope": { "type": "string" },
+        "crewAssigned": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "completed", "pending"] },
+        "ownerId": { "type": "string" }
       },
-      "required": ["ownerId", "name", "status"]
-    },
-    "ProjectMembership": {
-      "title": "Project Membership",
-      "description": "Associates a user with a project and a role.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "role": { "type": "string", "enum": ["manager", "contributor", "viewer"] }
-      },
-      "required": ["userId", "role"]
+      "required": ["name", "createdAt"]
     },
     "Calculation": {
-      "title": "Calculation",
-      "description": "A saved construction calculation.",
+      "title": "Saved Calculation",
+      "description": "A saved mathematical result from a calculator.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
+        "id": { "type": "string" },
         "projectId": { "type": "string" },
-        "companyId": { "type": "string" },
         "calculatorKey": { "type": "string" },
-        "calculatorVersion": { "type": "string" },
         "title": { "type": "string" },
-        "inputJson": { "type": "string" },
-        "resultJson": { "type": "string" },
-        "formulaStepsJson": { "type": "string" },
-        "warningsJson": { "type": "string" },
-        "sharedScope": { "type": "string" }
+        "date": { "type": "number" },
+        "result": { "type": "object" },
+        "ownerId": { "type": "string" }
       },
-      "required": ["userId", "calculatorKey", "calculatorVersion", "inputJson", "resultJson", "sharedScope"]
+      "required": ["calculatorKey", "title", "result"]
+    },
+    "KnowledgeItem": {
+      "title": "Knowledge Base Item",
+      "description": "A document, plan, or note in the company library.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "mimeType": { "type": "string" },
+        "projectId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "authorId": { "type": "string" }
+      },
+      "required": ["title", "content"]
     }
   },
   "firestore": {
-    "/profiles/{userId}": {
-      "schema": { "$ref": "#/entities/Profile" },
-      "description": "User profiles. ID must match Auth UID."
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles."
     },
-    "/companies/{companyId}": {
-      "schema": { "$ref": "#/entities/Company" },
-      "description": "Company workspaces."
-    },
-    "/companies/{companyId}/memberships/{userId}": {
-      "schema": { "$ref": "#/entities/CompanyMembership" },
-      "description": "Memberships for a company workspace. ID matches Auth UID."
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Company-wide or project-specific messages."
     },
     "/projects/{projectId}": {
-      "schema": { "$ref": "#/entities/Project" },
-      "description": "Construction projects."
-    },
-    "/projects/{projectId}/memberships/{userId}": {
-      "schema": { "$ref": "#/entities/ProjectMembership" },
-      "description": "Memberships for a project. ID matches Auth UID."
+      "schema": "Project",
+      "description": "Master list of company projects."
     },
     "/calculations/{calculationId}": {
-      "schema": { "$ref": "#/entities/Calculation" },
-      "description": "Saved construction calculations."
+      "schema": "Calculation",
+      "description": "Saved audit trails and mathematical outputs."
+    },
+    "/knowledge/{itemId}": {
+      "schema": "KnowledgeItem",
+      "description": "Company-wide blueprints and documentation."
     }
   }
 }

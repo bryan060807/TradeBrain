@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { db } from '../services/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { calculateStairRiseRun, StairInput } from '../lib/calculators/stairRiseRun';
 import { CalculatorResult } from '../lib/calculators/types';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../components/ui';
@@ -8,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { PdfExportButton } from '../components/PdfExportButton';
 
 export function StairCalculator() {
-  const { preferences, addRecentCalculator, saveCalculation, activeProjectId } = useAppStore();
+  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, user } = useAppStore();
   const navigate = useNavigate();
   
   const [input, setInput] = useState<StairInput>({
@@ -36,17 +38,27 @@ export function StairCalculator() {
     executeCalculation();
   };
 
-  const handleCommit = () => {
+  const handleCommit = async () => {
     if (!result) return;
-    saveCalculation({
-        id: crypto.randomUUID(),
+    const calcData = {
         projectId: activeProjectId,
         calculatorKey: 'stairRiseRun',
         title: `Stair Layout ${new Date().toLocaleTimeString()}`,
         date: Date.now(),
-        result: result
-    });
-    alert('Mathematical output committed to local ledger.');
+        result: result,
+        ownerId: user?.uid
+    };
+    
+    try {
+      if (user) {
+        await addDoc(collection(db, 'calculations'), calcData);
+      }
+      saveCalculation({ ...calcData, id: crypto.randomUUID() } as any);
+      alert('Mathematical output committed to global ledger.');
+    } catch (error) {
+      console.error("Cloud save failed:", error);
+      alert('Local commit successful, cloud sync pending.');
+    }
   };
 
   useEffect(() => {

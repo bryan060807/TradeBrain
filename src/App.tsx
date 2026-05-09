@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { AuthProvider } from './components/AuthProvider';
+import { Login } from './pages/Login';
 import { Jobsite } from './pages/Jobsite';
 import { CalculatorsList } from './pages/CalculatorsList';
 import { StairCalculator } from './pages/StairCalculator';
@@ -8,36 +10,43 @@ import { GenericCalculator } from './pages/GenericCalculator';
 import { Settings } from './pages/Settings';
 import { Projects } from './pages/Projects';
 import { KnowledgeBank } from './pages/KnowledgeBank';
+import { useAppStore } from './store/useAppStore';
 
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-16 text-center text-[#A0A0A0] h-full border border-white/5 bg-[#0F0F0F] rounded-sm shadow-xl">
-      <h2 className="text-4xl font-serif italic text-white mb-4 tracking-tight">{title}</h2>
-      <p className="font-light tracking-wide">System Module Integration Pending</p>
-      <div className="mt-8 flex space-x-2">
-        <div className="w-1 h-1 rounded-full bg-[#D4AF37]"></div>
-        <div className="w-1 h-1 rounded-full bg-white/20"></div>
-        <div className="w-1 h-1 rounded-full bg-white/20"></div>
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, authLoading } = useAppStore();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  return <>{children}</>;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Jobsite />} />
-          <Route path="calculators" element={<CalculatorsList />} />
-          <Route path="calculators/stairRiseRun" element={<StairCalculator />} />
-          <Route path="calculators/:id" element={<GenericCalculator />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="knowledge" element={<KnowledgeBank />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Jobsite />} />
+            <Route path="calculators" element={<CalculatorsList />} />
+            <Route path="calculators/stairRiseRun" element={<StairCalculator />} />
+            <Route path="calculators/:id" element={<GenericCalculator />} />
+            <Route path="projects" element={<Projects />} />
+            <Route path="knowledge" element={<KnowledgeBank />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

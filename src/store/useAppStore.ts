@@ -29,7 +29,16 @@ export type KnowledgeItem = {
   createdAt: number;
 };
 
+export type UserProfile = {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'owner' | 'foreman' | 'laborer';
+};
+
 type AppState = {
+  user: UserProfile | null;
+  authLoading: boolean;
   activeProjectId: string | null;
   favoriteCalculators: string[];
   recentCalculators: string[];
@@ -50,6 +59,11 @@ type AppState = {
     aiVoice?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr';
     jobsiteBackground?: string | null;
   };
+  setUser: (user: UserProfile | null) => void;
+  setAuthLoading: (loading: boolean) => void;
+  setProjects: (projects: Project[]) => void;
+  setCalculations: (calcs: SavedCalculation[]) => void;
+  setKnowledge: (items: KnowledgeItem[]) => void;
   setActiveProject: (id: string | null) => void;
   addProject: (p: Project) => void;
   deleteProject: (id: string) => void;
@@ -81,6 +95,8 @@ Object.entries(defaultFiles).forEach(([path, content]) => {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      user: null,
+      authLoading: true,
       activeProjectId: null,
       favoriteCalculators: [],
       recentCalculators: [],
@@ -101,6 +117,11 @@ export const useAppStore = create<AppState>()(
         aiVoice: 'Zephyr',
         jobsiteBackground: null,
       },
+      setUser: (user) => set({ user }),
+      setAuthLoading: (loading) => set({ authLoading: loading }),
+      setProjects: (projects) => set({ projects }),
+      setCalculations: (savedCalculations) => set({ savedCalculations }),
+      setKnowledge: (knowledgeBase) => set({ knowledgeBase }),
       setActiveProject: (id) => set({ activeProjectId: id }),
       addProject: (p) => set((state) => ({ projects: [p, ...state.projects] })),
       deleteProject: (id) => set((state) => ({ 
