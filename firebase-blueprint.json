@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile containing preferences and defaults.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "tradeRole": { "type": "string" },
+        "preferredUnits": { "type": "string" },
+        "preferredFractionDenominator": { "type": "number" },
+        "defaultStudSpacingIn": { "type": "number" },
+        "defaultWastePercent": { "type": "number" },
+        "voiceEnabled": { "type": "boolean" },
+        "userId": { "type": "string" }
+      },
+      "required": ["userId", "preferredUnits"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "A company workspace.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "defaultUnits": { "type": "string" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "CompanyMembership": {
+      "title": "Company Membership",
+      "description": "Associates a user with a company and a role.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "admin", "manager", "member", "viewer"] },
+        "status": { "type": "string", "enum": ["invited", "active", "suspended"] }
+      },
+      "required": ["userId", "role", "status"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A construction project belonging to a company or user.",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "type": "string" },
+        "projectType": { "type": "string" }
+      },
+      "required": ["ownerId", "name", "status"]
+    },
+    "ProjectMembership": {
+      "title": "Project Membership",
+      "description": "Associates a user with a project and a role.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["manager", "contributor", "viewer"] }
+      },
+      "required": ["userId", "role"]
+    },
+    "Calculation": {
+      "title": "Calculation",
+      "description": "A saved construction calculation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "projectId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "calculatorKey": { "type": "string" },
+        "calculatorVersion": { "type": "string" },
+        "title": { "type": "string" },
+        "inputJson": { "type": "string" },
+        "resultJson": { "type": "string" },
+        "formulaStepsJson": { "type": "string" },
+        "warningsJson": { "type": "string" },
+        "sharedScope": { "type": "string" }
+      },
+      "required": ["userId", "calculatorKey", "calculatorVersion", "inputJson", "resultJson", "sharedScope"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "User profiles. ID must match Auth UID."
+    },
+    "/companies/{companyId}": {
+      "schema": { "$ref": "#/entities/Company" },
+      "description": "Company workspaces."
+    },
+    "/companies/{companyId}/memberships/{userId}": {
+      "schema": { "$ref": "#/entities/CompanyMembership" },
+      "description": "Memberships for a company workspace. ID matches Auth UID."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Construction projects."
+    },
+    "/projects/{projectId}/memberships/{userId}": {
+      "schema": { "$ref": "#/entities/ProjectMembership" },
+      "description": "Memberships for a project. ID matches Auth UID."
+    },
+    "/calculations/{calculationId}": {
+      "schema": { "$ref": "#/entities/Calculation" },
+      "description": "Saved construction calculations."
+    }
+  }
+}

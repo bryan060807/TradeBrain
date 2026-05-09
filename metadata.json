@@ -1,0 +1,6 @@
+{
+  "name": "TradeBrain",
+  "description": "Mobile-first construction companion that combines calculators, searchable knowledge bank, AI assistance, and project memory.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
