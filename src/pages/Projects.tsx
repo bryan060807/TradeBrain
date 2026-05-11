@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Button, Label } from '../components/ui';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, Project } from '../store/useAppStore';
 import { db } from '../services/firebase';
 import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Folder, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { Folder, Plus, Trash2, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function Projects() {
-  const { projects, activeProjectId, setActiveProject, savedCalculations, removeCalculation, preferences, user } = useAppStore();
+  const { projects, activeProjectId, setActiveProject, savedCalculations, removeCalculation, preferences, user, updateProject } = useAppStore();
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectType, setNewProjectType] = useState(preferences.defaultProjectType || 'Residential');
   const [newLocation, setNewLocation] = useState('');
   const [newScope, setNewScope] = useState('');
   const [newCrewAssigned, setNewCrewAssigned] = useState(preferences.defaultCrewAssigned || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // local state for editing preferences
+  const [editingPrefsId, setEditingPrefsId] = useState<string | null>(null);
+  const [tempPrefs, setTempPrefs] = useState<Project['preferences']>({});
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +60,36 @@ export function Projects() {
       console.error("Error deleting project:", error);
     }
   };
+
+  const handleStartEditPrefs = (proj: Project) => {
+    setEditingPrefsId(proj.id);
+    setTempPrefs({
+       defaultStudSpacingIn: proj.preferences?.defaultStudSpacingIn,
+       defaultWastePercent: proj.preferences?.defaultWastePercent,
+       stairMaxRiser: proj.preferences?.stairMaxRiser,
+       stairMinTread: proj.preferences?.stairMinTread,
+       stairTargetRiser: proj.preferences?.stairTargetRiser,
+       stairTargetTread: proj.preferences?.stairTargetTread,
+    });
+  };
+
+  const handleSavePrefs = async (id: string) => {
+    try {
+      const cleanPrefs = Object.fromEntries(
+        Object.entries(tempPrefs).filter(([_, v]) => v !== undefined)
+      );
+      if (user) {
+        await updateDoc(doc(db, 'projects', id), {
+          preferences: cleanPrefs
+        });
+      }
+      updateProject(id, { preferences: cleanPrefs });
+      setEditingPrefsId(null);
+    } catch (error) {
+      console.error("Error updating project preferences:", error);
+    }
+  };
+
 
   return (
     <div className="space-y-12 max-w-4xl mx-auto">
@@ -216,6 +250,61 @@ export function Projects() {
                         ))}
                       </div>
                     )}
+                    
+                    <div className="mt-8 pt-6 border-t border-white/5">
+                       <div className="flex items-center justify-between mb-4">
+                         <h4 className="text-[10px] uppercase tracking-widest text-[#707070]">Project-Specific Calculator Defaults</h4>
+                         {editingPrefsId !== proj.id && (
+                           <Button variant="ghost" className="h-6 px-2 text-[10px] gap-1" onClick={() => handleStartEditPrefs(proj)}>
+                              <SettingsIcon className="w-3 h-3" /> Edit Defaults
+                           </Button>
+                         )}
+                       </div>
+                       
+                       {editingPrefsId === proj.id ? (
+                          <div className="space-y-4 bg-[#161616] p-4 border border-white/5 rounded-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs">Stud Spacing (in)</Label>
+                                <Input type="number" value={tempPrefs.defaultStudSpacingIn || ''} onChange={e => setTempPrefs({...tempPrefs, defaultStudSpacingIn: Number(e.target.value) || undefined})} placeholder={preferences.defaultStudSpacingIn.toString()} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Waste %</Label>
+                                <Input type="number" value={tempPrefs.defaultWastePercent || ''} onChange={e => setTempPrefs({...tempPrefs, defaultWastePercent: Number(e.target.value) || undefined})} placeholder={preferences.defaultWastePercent.toString()} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Max Riser (in)</Label>
+                                <Input type="number" step="0.125" value={tempPrefs.stairMaxRiser || ''} onChange={e => setTempPrefs({...tempPrefs, stairMaxRiser: Number(e.target.value) || undefined})} placeholder={preferences.stairMaxRiser.toString()} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Min Tread (in)</Label>
+                                <Input type="number" step="0.125" value={tempPrefs.stairMinTread || ''} onChange={e => setTempPrefs({...tempPrefs, stairMinTread: Number(e.target.value) || undefined})} placeholder={preferences.stairMinTread.toString()} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Target Riser (in)</Label>
+                                <Input type="number" step="0.125" value={tempPrefs.stairTargetRiser || ''} onChange={e => setTempPrefs({...tempPrefs, stairTargetRiser: Number(e.target.value) || undefined})} placeholder={preferences.stairTargetRiser.toString()} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Target Tread (in)</Label>
+                                <Input type="number" step="0.125" value={tempPrefs.stairTargetTread || ''} onChange={e => setTempPrefs({...tempPrefs, stairTargetTread: Number(e.target.value) || undefined})} placeholder={preferences.stairTargetTread.toString()} />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-end pt-2">
+                               <Button variant="ghost" onClick={() => setEditingPrefsId(null)}>Cancel</Button>
+                               <Button onClick={() => handleSavePrefs(proj.id)}>Save Defaults</Button>
+                            </div>
+                          </div>
+                       ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm font-light text-[#A0A0A0]">
+                             <div>Stud Spacing: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.defaultStudSpacingIn || 'Global'}</span></div>
+                             <div>Waste: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.defaultWastePercent ? `${proj.preferences.defaultWastePercent}%` : 'Global'}</span></div>
+                             <div>Max Riser: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.stairMaxRiser || 'Global'}</span></div>
+                             <div>Min Tread: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.stairMinTread || 'Global'}</span></div>
+                             <div>Target Riser: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.stairTargetRiser || 'Global'}</span></div>
+                             <div>Target Tread: <span className="text-[#E5E5E5] font-medium">{proj.preferences?.stairTargetTread || 'Global'}</span></div>
+                          </div>
+                       )}
+                    </div>
                   </div>
                 )}
               </Card>

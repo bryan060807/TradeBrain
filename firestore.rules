@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
     // --- Helpers ---
     function isSignedIn() {
       return request.auth != null;
@@ -10,61 +15,177 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email_verified == true;
     }
     
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function isExplicitAdmin() {
+      return isSignedIn() && request.auth.token.email == 'bryan060807@gmail.com';
     }
     
-    function isRole(role) {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == role;
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isOwner() { 
+      return isSignedIn() && (isExplicitAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getRole() == 'owner')); 
     }
     
-    function isOwner() { return isRole('owner'); }
-    function isForeman() { return isRole('foreman') || isOwner(); }
+    function isForeman() { 
+      return isSignedIn() && (isExplicitAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getRole() in ['owner', 'foreman'])); 
+    }
+    
+    function isLaborer() { 
+      return isSignedIn() && (isExplicitAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getRole() in ['owner', 'foreman', 'laborer'])); 
+    }
+
     function isAdmin() { return isOwner(); }
 
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
+    // --- Validation Helpers ---
+    function isValidProject(data) {
+      return data.keys().hasAll(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200;
+    }
+
+    function isValidPunchList(data) {
+      return data.keys().hasAll(['projectId', 'title', 'status', 'createdAt']) &&
+             data.projectId is string && 
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.status in ['Open', 'In Progress', 'Completed'];
+    }
+
+    function isValidDailyReport(data) {
+      return data.keys().hasAll(['projectId', 'date', 'ownerId', 'createdAt']) &&
+             data.projectId is string &&
+             data.ownerId == request.auth.uid;
+    }
+
+    function isValidInventory(data) {
+      return data.keys().hasAll(['name', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.status in ['In Stock', 'In Use', 'Maintenance', 'Lost'];
+    }
+
+    function isValidAudit(data) {
+      return data.keys().hasAll(['projectId', 'type', 'date', 'status', 'createdAt']) &&
+             data.projectId is string &&
+             data.status in ['Draft', 'Completed'];
+    }
+
+    function isValidSafety(data) {
+      return data.keys().hasAll(['title', 'date', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200;
+    }
+
+    function isValidRFI(data) {
+      return data.keys().hasAll(['projectId', 'title', 'question', 'status', 'priority', 'createdAt']) &&
+             data.projectId is string &&
+             data.status in ['Open', 'In Review', 'Answered', 'Closed'] &&
+             data.priority in ['Low', 'Medium', 'High'];
+    }
+
+    function isStatusUpdateOnly() {
+      return incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+    }
 
     // --- User Profiles ---
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow get: if isSignedIn() && (userId == request.auth.uid || isOwner());
+      allow list: if isOwner();
       allow create: if isSignedIn() && userId == request.auth.uid;
-      allow update: if isSignedIn() && userId == request.auth.uid;
+      allow update: if isSignedIn() && (userId == request.auth.uid || isOwner());
+    }
+
+    match /projects/{projectId} {
+      allow get: if isLaborer() && isValidId(projectId);
+      allow list: if isLaborer();
+      allow create: if isForeman() && isVerified() && isValidProject(incoming());
+      allow update: if isForeman() && isVerified() && isValidProject(incoming());
+      allow delete: if isOwner();
+    }
+
+    // --- Daily Reports ---
+    match /daily_reports/{reportId} {
+      allow get: if isLaborer() && isValidId(reportId);
+      allow list: if isLaborer();
+      allow create: if isForeman() && isVerified() && isValidDailyReport(incoming());
+      allow update: if isForeman() && isVerified() && isValidDailyReport(incoming()) && (incoming().ownerId == existing().ownerId || isOwner());
+      allow delete: if isOwner();
+    }
+
+    // --- Punch Lists ---
+    match /punch_lists/{id} {
+      allow get: if isLaborer() && isValidId(id);
+      allow list: if isLaborer();
+      allow create: if isForeman() && isVerified() && isValidPunchList(incoming());
+      allow update: if isVerified() && (
+        (isForeman() && isValidPunchList(incoming())) ||
+        (isLaborer() && isStatusUpdateOnly() && incoming().status == 'Completed')
+      );
+      allow delete: if isForeman();
+    }
+
+    // --- Inventory ---
+    match /inventory/{id} {
+      allow get: if isLaborer() && isValidId(id);
+      allow list: if isLaborer();
+      allow create, update: if isForeman() && isVerified() && isValidInventory(incoming());
+      allow delete: if isOwner();
+    }
+
+    // --- Audits ---
+    match /audits/{id} {
+      allow get: if isForeman() && isValidId(id);
+      allow list: if isForeman();
+      allow create, update: if isForeman() && isVerified() && isValidAudit(incoming());
+      allow delete: if isOwner();
+    }
+
+    // --- Safety Briefings ---
+    match /safety_briefings/{id} {
+      allow get: if isLaborer() && isValidId(id);
+      allow list: if isLaborer();
+      allow create, update: if isForeman() && isVerified() && isValidSafety(incoming());
+      allow delete: if isOwner();
+    }
+
+    // --- RFIs ---
+    match /rfis/{id} {
+      allow get: if isLaborer() && isValidId(id);
+      allow list: if isLaborer();
+      allow create, update: if isForeman() && isVerified() && isValidRFI(incoming());
+      allow delete: if isOwner();
     }
 
     // --- Messages ---
-    match /messages/{messageId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow delete: if isAdmin() || (isSignedIn() && existing().senderId == request.auth.uid);
-    }
-
-    // --- Projects ---
-    match /projects/{projectId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isAdmin();
+    match /messages/{id} {
+      allow get: if isLaborer() && isValidId(id);
+      allow list: if isLaborer();
+      allow create: if isVerified();
+      allow delete: if isOwner() || (isSignedIn() && existing().senderId == request.auth.uid);
     }
 
     // --- Calculations ---
     match /calculations/{calculationId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow delete: if isAdmin() || (isSignedIn() && existing().ownerId == request.auth.uid);
+      allow get: if isSignedIn() && (isOwner() || existing().ownerId == request.auth.uid);
+      allow list: if isSignedIn(); // Queries should be filtered by ownerId in code
+      allow create: if isVerified();
+      allow delete: if isOwner() || (isSignedIn() && existing().ownerId == request.auth.uid);
     }
 
     // --- Knowledge Base ---
     match /knowledge/{itemId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow get, list: if isLaborer();
+      allow create, update, delete: if isOwner();
     }
 
-    // Default Deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
   }
 }

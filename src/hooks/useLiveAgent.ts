@@ -16,6 +16,7 @@ export function useLiveAgent() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [agentResponse, setAgentResponse] = useState<string | null>(null);
   const [userTranscript, setUserTranscript] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const sessionRef = useRef<any>(null);
   const audioStreamerRef = useRef<AudioStreamStreamer | null>(null);
@@ -31,11 +32,22 @@ export function useLiveAgent() {
   const connect = useCallback(async () => {
     if (isConnected || isConnecting) return;
     setIsConnecting(true);
+    setError(null);
     try {
       const ai = getAi();
       
-      // Get microphone
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err: any) {
+        if (err.name === 'NotAllowedError' || err.message?.includes('not allowed by the user agent')) {
+          throw new Error("Microphone access is blocked. Please open the app in a new tab (click the ↗️ icon) to use Voice Assistant.");
+        }
+        if (err.name === 'NotFoundError' || err.message?.includes('The object can not be found')) {
+          throw new Error("No microphone found. Please connect a microphone to use Voice Assistant.");
+        }
+        throw err;
+      }
       streamRef.current = stream;
 
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -250,6 +262,9 @@ Guidelines:
                     else if (args.action === 'navigate_projects') navigate('/projects');
                     else if (args.action === 'navigate_settings') navigate('/settings');
                     else if (args.action === 'navigate_home') navigate('/');
+                    else if (args.action === 'navigate_inventory') navigate('/inventory');
+                    else if (args.action === 'navigate_punch_lists') navigate('/punch-lists');
+                    else if (args.action === 'navigate_reports') navigate('/reports');
                     responseData = { success: true };
                   } else if (call.name === 'searchKnowledgeBank') {
                     const query = args.query.toLowerCase();
@@ -296,8 +311,9 @@ Guidelines:
       });
       sessionRef.current = await sessionPromise;
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to start live session:", err);
+      setError(err?.message || "Failed to start live session. Please check microphone permissions.");
       setIsConnecting(false);
       setIsConnected(false);
     }
@@ -338,6 +354,8 @@ Guidelines:
     disconnect,
     agentResponse,
     clearAgentResponse: () => setAgentResponse(null),
-    userTranscript
+    userTranscript,
+    error,
+    clearError: () => setError(null)
   };
 }

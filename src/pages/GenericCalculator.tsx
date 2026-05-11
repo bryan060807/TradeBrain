@@ -11,7 +11,18 @@ import { PdfExportButton } from '../components/PdfExportButton';
 export function GenericCalculator() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, user } = useAppStore();
+  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, projects, user } = useAppStore();
+  
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  const projPrefs = activeProject?.preferences;
+  const mergedPrefs = { ...preferences };
+  if (projPrefs) {
+    Object.entries(projPrefs).forEach(([key, val]) => {
+      if (val !== undefined) {
+        (mergedPrefs as any)[key] = val;
+      }
+    });
+  }
   
   const calcDef = CALCULATORS_REGISTRY[id || ''];
   
@@ -20,7 +31,7 @@ export function GenericCalculator() {
 
   const executeCalculation = () => {
     if (!calcDef) return;
-    const res = calcDef.calculate(input, preferences);
+    const res = calcDef.calculate(input, mergedPrefs);
     setResult(res);
     if (id) addRecentCalculator(id);
   };

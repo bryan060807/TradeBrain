@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isRole(role) {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             getUserData(request.auth.uid).role == role;
+    }
+
+    function isOwner() { return isRole('owner'); }
+    function isAdmin() { return isOwner(); }
+
+    // --- Validation Helpers ---
+    function isValidProject(data) {
+      return data.keys().hasAll(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.createdAt is int;
+    }
+
+    function isValidPunchList(data) {
+      return data.keys().hasAll(['projectId', 'title', 'status', 'createdAt']) &&
+             data.projectId is string && 
+             data.title is string && data.title.size() <= 200 &&
+             data.status in ['Open', 'In Progress', 'Completed'] &&
+             data.createdAt is int;
+    }
+
+    function isValidDailyReport(data) {
+      return data.keys().hasAll(['projectId', 'date', 'ownerId', 'createdAt']) &&
+             data.projectId is string &&
+             data.date is int &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt is int;
+    }
+
+    function isValidInventory(data) {
+      return data.keys().hasAll(['name', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.status in ['In Stock', 'In Use', 'Maintenance', 'Lost'] &&
+             data.createdAt is int;
+    }
+
+    function isValidAudit(data) {
+      return data.keys().hasAll(['projectId', 'type', 'date', 'status', 'createdAt']) &&
+             data.projectId is string &&
+             data.status in ['Draft', 'Completed'] &&
+             data.createdAt is int;
+    }
+
+    function isValidSafety(data) {
+      return data.keys().hasAll(['title', 'date', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.createdAt is int;
+    }
+
+    function isValidRFI(data) {
+      return data.keys().hasAll(['projectId', 'title', 'question', 'status', 'priority', 'createdAt']) &&
+             data.projectId is string &&
+             data.status in ['Open', 'In Review', 'Answered', 'Closed'] &&
+             data.priority in ['Low', 'Medium', 'High'] &&
+             data.createdAt is int;
+    }
+
+    // --- Rules ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (userId == request.auth.uid || isOwner());
+      allow list: if isOwner();
+      allow create: if isSignedIn() && userId == request.auth.uid;
+      allow update: if isSignedIn() && (userId == request.auth.uid || isOwner());
+    }
+
+    match /projects/{projectId} {
+      allow get: if isSignedIn() && isValidId(projectId);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidProject(incoming());
+      allow update: if isVerified() && isValidProject(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /punch_lists/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidPunchList(incoming());
+      allow update: if isVerified() && isValidPunchList(incoming());
+      allow delete: if isVerified();
+    }
+
+    match /daily_reports/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidDailyReport(incoming());
+      allow update: if isVerified() && isValidDailyReport(incoming()) && (incoming().ownerId == existing().ownerId || isAdmin());
+      allow delete: if isAdmin() || (isSignedIn() && existing().ownerId == request.auth.uid);
+    }
+
+    match /inventory/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidInventory(incoming());
+      allow update: if isVerified() && isValidInventory(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /audits/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidAudit(incoming());
+      allow update: if isVerified() && isValidAudit(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /safety_briefings/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidSafety(incoming());
+      allow update: if isVerified() && isValidSafety(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /rfis/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified() && isValidRFI(incoming());
+      allow update: if isVerified() && isValidRFI(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified();
+      allow delete: if isAdmin() || (isSignedIn() && existing().senderId == request.auth.uid);
+    }
+    
+    match /calculations/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isVerified();
+      allow delete: if isAdmin() || (isSignedIn() && existing().ownerId == request.auth.uid);
+    }
+    
+    match /knowledge/{id} {
+      allow get: if isSignedIn() && isValidId(id);
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

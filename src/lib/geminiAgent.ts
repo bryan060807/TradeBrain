@@ -52,7 +52,7 @@ const executeActionDecl: FunctionDeclaration = {
   parameters: {
     type: Type.OBJECT,
     properties: {
-      action: { type: Type.STRING, enum: ["calculate", "save", "export_pdf", "navigate_projects", "navigate_settings", "navigate_home"] }
+      action: { type: Type.STRING, enum: ["calculate", "save", "export_pdf", "navigate_projects", "navigate_settings", "navigate_home", "navigate_inventory", "navigate_punch_lists", "navigate_reports"] }
     },
     required: ["action"]
   }

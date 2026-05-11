@@ -1,36 +1,8 @@
 {
   "entities": {
-    "User": {
-      "title": "User Profile",
-      "description": "User account information and role within the company.",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "displayName": { "type": "string" },
-        "email": { "type": "string" },
-        "role": { "type": "string", "enum": ["owner", "foreman", "laborer"] },
-        "photoURL": { "type": "string" },
-        "createdAt": { "type": "number" }
-      },
-      "required": ["uid", "email", "role"]
-    },
-    "Message": {
-      "title": "Company Message",
-      "description": "A message posted in the company-wide chat or board.",
-      "type": "object",
-      "properties": {
-        "text": { "type": "string" },
-        "senderId": { "type": "string" },
-        "senderName": { "type": "string" },
-        "senderRole": { "type": "string" },
-        "createdAt": { "type": "number" },
-        "projectId": { "type": "string" }
-      },
-      "required": ["text", "senderId", "createdAt"]
-    },
     "Project": {
-      "title": "Construction Project",
-      "description": "Details about a specific jobsite.",
+      "title": "Project",
+      "description": "Construction project record",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -38,62 +10,104 @@
         "location": { "type": "string" },
         "scope": { "type": "string" },
         "crewAssigned": { "type": "string" },
-        "createdAt": { "type": "number" },
-        "status": { "type": "string", "enum": ["active", "completed", "pending"] },
-        "ownerId": { "type": "string" }
+        "createdAt": { "type": "integer" }
       },
       "required": ["name", "createdAt"]
     },
-    "Calculation": {
-      "title": "Saved Calculation",
-      "description": "A saved mathematical result from a calculator.",
+    "PunchListItem": {
+      "title": "Punch List Item",
+      "description": "A task or issue to be addressed on a jobsite",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "projectId": { "type": "string" },
-        "calculatorKey": { "type": "string" },
         "title": { "type": "string" },
-        "date": { "type": "number" },
-        "result": { "type": "object" },
-        "ownerId": { "type": "string" }
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Completed"] },
+        "assignedTo": { "type": "string" },
+        "deadline": { "type": "integer" },
+        "createdAt": { "type": "integer" }
       },
-      "required": ["calculatorKey", "title", "result"]
+      "required": ["projectId", "title", "status", "createdAt"]
     },
-    "KnowledgeItem": {
-      "title": "Knowledge Base Item",
-      "description": "A document, plan, or note in the company library.",
+    "DailyReport": {
+      "title": "Daily Report",
+      "description": "Summary of work completed in a day",
       "type": "object",
       "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "mimeType": { "type": "string" },
         "projectId": { "type": "string" },
-        "createdAt": { "type": "number" },
-        "authorId": { "type": "string" }
+        "date": { "type": "integer" },
+        "workCompleted": { "type": "string" },
+        "workerHours": { "type": "number" },
+        "materialsUsed": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "integer" }
       },
-      "required": ["title", "content"]
+      "required": ["projectId", "date", "ownerId", "createdAt"]
+    },
+    "InventoryItem": {
+      "title": "Inventory Item",
+      "description": "Equipment or material tracked in inventory",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "qrCode": { "type": "string" },
+        "location": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["In Stock", "In Use", "Maintenance", "Lost"] },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["name", "status", "createdAt"]
+    },
+    "Audit": {
+      "title": "Audit",
+      "description": "Safety or quality inspection",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "type": { "type": "string" },
+        "date": { "type": "integer" },
+        "inspector": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Completed"] },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["projectId", "type", "date", "status", "createdAt"]
+    },
+    "SafetyBriefing": {
+      "title": "Safety Briefing",
+      "description": "A safety topic discussed with the crew",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "integer" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["title", "date", "createdAt"]
+    },
+    "RFI": {
+      "title": "RFI",
+      "description": "Request for Information",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "number": { "type": "string" },
+        "title": { "type": "string" },
+        "question": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "In Review", "Answered", "Closed"] },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["projectId", "title", "question", "status", "priority", "createdAt"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "User",
-      "description": "Individual user profiles."
-    },
-    "/messages/{messageId}": {
-      "schema": "Message",
-      "description": "Company-wide or project-specific messages."
-    },
-    "/projects/{projectId}": {
-      "schema": "Project",
-      "description": "Master list of company projects."
-    },
-    "/calculations/{calculationId}": {
-      "schema": "Calculation",
-      "description": "Saved audit trails and mathematical outputs."
-    },
-    "/knowledge/{itemId}": {
-      "schema": "KnowledgeItem",
-      "description": "Company-wide blueprints and documentation."
-    }
+    "/projects/{projectId}": { "schema": "Project", "description": "Projects" },
+    "/punch_lists/{punchId}": { "schema": "PunchListItem", "description": "Punch Lists" },
+    "/daily_reports/{reportId}": { "schema": "DailyReport", "description": "Daily Reports" },
+    "/inventory/{itemId}": { "schema": "InventoryItem", "description": "Inventory" },
+    "/audits/{id}": { "schema": "Audit", "description": "Audits" },
+    "/safety_briefings/{id}": { "schema": "SafetyBriefing", "description": "Safety Briefings" },
+    "/rfis/{id}": { "schema": "RFI", "description": "RFIs" }
   }
 }

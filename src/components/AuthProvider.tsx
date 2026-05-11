@@ -19,13 +19,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(profile);
         } else {
           // Create new user profile
-          // We can check if any other users exist to determine if this is the first one (owner)
-          // For now, let's just make them a laborer by default, or owner if they are the first.
+          const isAdminEmail = firebaseUser.email === 'bryan060807@gmail.com';
           const newProfile: UserProfile = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName || 'New Builder',
-            role: 'laborer' // Default role
+            role: isAdminEmail ? 'owner' : 'laborer'
           };
           
           await setDoc(userRef, newProfile);

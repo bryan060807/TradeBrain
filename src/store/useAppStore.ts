@@ -9,6 +9,14 @@ export type Project = {
   scope?: string;
   crewAssigned?: string;
   createdAt: number;
+  preferences?: {
+    defaultStudSpacingIn?: number;
+    defaultWastePercent?: number;
+    stairMaxRiser?: number;
+    stairMinTread?: number;
+    stairTargetRiser?: number;
+    stairTargetTread?: number;
+  };
 };
 
 export type SavedCalculation = {
@@ -29,6 +37,82 @@ export type KnowledgeItem = {
   createdAt: number;
 };
 
+export type InventoryItem = {
+  id: string;
+  name: string;
+  qrCode: string;
+  location: string;
+  assignedTo: string;
+  status: 'In Stock' | 'In Use' | 'Maintenance' | 'Lost';
+  createdAt: number;
+};
+
+export type PunchListItem = {
+  id: string;
+  projectId: string | null;
+  title: string;
+  description: string;
+  photoUrl: string | null;
+  markupData?: string; // Serialized drawing data
+  status: 'Open' | 'In Progress' | 'Completed';
+  assignedTo: string;
+  deadline: number;
+  createdAt: number;
+};
+
+export type DailyReport = {
+  id: string;
+  projectId: string | null;
+  date: number;
+  workCompleted: string;
+  workerHours: number;
+  materialsUsed: string;
+  photoUrls: string[];
+  ownerId: string;
+  createdAt: number;
+};
+
+export type AuditItem = {
+  item: string;
+  pass: boolean | null;
+  notes?: string;
+};
+
+export type Audit = {
+  id: string;
+  projectId: string;
+  type: string;
+  date: number;
+  inspector: string;
+  status: 'Draft' | 'Completed';
+  checklist: AuditItem[];
+  createdAt: number;
+};
+
+export type SafetyBriefing = {
+  id: string;
+  projectId: string | null;
+  title: string;
+  date: number;
+  content: string;
+  signatures: { name: string; signedAt: number }[];
+  createdAt: number;
+};
+
+export type RFI = {
+  id: string;
+  projectId: string;
+  number: string;
+  title: string;
+  question: string;
+  proposedSolution?: string;
+  status: 'Open' | 'In Review' | 'Answered' | 'Closed';
+  priority: 'Low' | 'Medium' | 'High';
+  answer?: string;
+  assignedTo?: string;
+  createdAt: number;
+};
+
 export type UserProfile = {
   uid: string;
   email: string;
@@ -45,6 +129,12 @@ type AppState = {
   projects: Project[];
   savedCalculations: SavedCalculation[];
   knowledgeBase: KnowledgeItem[];
+  inventory: InventoryItem[];
+  punchLists: PunchListItem[];
+  dailyReports: DailyReport[];
+  audits: Audit[];
+  safetyBriefings: SafetyBriefing[];
+  rfis: RFI[];
   preferences: {
     units: 'imperial' | 'metric';
     fractionDenominator: number;
@@ -58,14 +148,23 @@ type AppState = {
     defaultCrewAssigned?: string;
     aiVoice?: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr';
     jobsiteBackground?: string | null;
+    pinnedModules: string[];
   };
   setUser: (user: UserProfile | null) => void;
+  updateUserRole: (role: UserProfile['role']) => void;
   setAuthLoading: (loading: boolean) => void;
   setProjects: (projects: Project[]) => void;
   setCalculations: (calcs: SavedCalculation[]) => void;
   setKnowledge: (items: KnowledgeItem[]) => void;
+  setInventory: (items: InventoryItem[]) => void;
+  setPunchLists: (items: PunchListItem[]) => void;
+  setDailyReports: (items: DailyReport[]) => void;
+  setAudits: (items: Audit[]) => void;
+  setSafetyBriefings: (items: SafetyBriefing[]) => void;
+  setRfis: (items: RFI[]) => void;
   setActiveProject: (id: string | null) => void;
   addProject: (p: Project) => void;
+  updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addKnowledgeItem: (item: KnowledgeItem) => void;
   deleteKnowledgeItem: (id: string) => void;
@@ -103,6 +202,12 @@ export const useAppStore = create<AppState>()(
       projects: [],
       savedCalculations: [],
       knowledgeBase: initialKnowledge,
+      inventory: [],
+      punchLists: [],
+      dailyReports: [],
+      audits: [],
+      safetyBriefings: [],
+      rfis: [],
       preferences: {
         units: 'imperial',
         fractionDenominator: 16,
@@ -116,14 +221,27 @@ export const useAppStore = create<AppState>()(
         defaultCrewAssigned: '',
         aiVoice: 'Zephyr',
         jobsiteBackground: null,
+        pinnedModules: ['tracker', 'punch-lists', 'reports', 'audits'],
       },
       setUser: (user) => set({ user }),
+      updateUserRole: (role) => set((state) => ({ 
+        user: state.user ? { ...state.user, role } : null 
+      })),
       setAuthLoading: (loading) => set({ authLoading: loading }),
       setProjects: (projects) => set({ projects }),
       setCalculations: (savedCalculations) => set({ savedCalculations }),
       setKnowledge: (knowledgeBase) => set({ knowledgeBase }),
+      setInventory: (inventory) => set({ inventory }),
+      setPunchLists: (punchLists) => set({ punchLists }),
+      setDailyReports: (dailyReports) => set({ dailyReports }),
+      setAudits: (audits) => set({ audits }),
+      setSafetyBriefings: (safetyBriefings) => set({ safetyBriefings }),
+      setRfis: (rfis) => set({ rfis }),
       setActiveProject: (id) => set({ activeProjectId: id }),
       addProject: (p) => set((state) => ({ projects: [p, ...state.projects] })),
+      updateProject: (id, updates) => set((state) => ({
+        projects: state.projects.map(p => p.id === id ? { ...p, ...updates } : p)
+      })),
       deleteProject: (id) => set((state) => ({ 
         projects: state.projects.filter(p => p.id !== id),
         activeProjectId: state.activeProjectId === id ? null : state.activeProjectId

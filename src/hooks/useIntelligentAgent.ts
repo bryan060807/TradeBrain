@@ -52,6 +52,14 @@ export function useIntelligentAgent() {
           else if (call.args.action === 'navigate_projects') navigate('/projects');
           else if (call.args.action === 'navigate_settings') navigate('/settings');
           else if (call.args.action === 'navigate_home') navigate('/');
+          else if (call.args.action === 'navigate_inventory') navigate('/inventory');
+          else if (call.args.action === 'navigate_punch_lists') navigate('/punch-lists');
+          else if (call.args.action === 'navigate_reports') navigate('/reports');
+          else if (call.args.action === 'navigate_tracker') navigate('/tracker');
+          else if (call.args.action === 'navigate_audits') navigate('/audits');
+          else if (call.args.action === 'navigate_safety') navigate('/safety-briefings');
+          else if (call.args.action === 'navigate_rfis') navigate('/rfis');
+          else if (call.args.action === 'navigate_menu') navigate('/menu');
         } else if (call.name === 'replyToUser') {
           setAgentResponse(call.args.message);
           

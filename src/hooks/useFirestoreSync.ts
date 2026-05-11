@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
-import { useAppStore, Project, SavedCalculation, KnowledgeItem } from '../store/useAppStore';
+import { useAppStore, Project, SavedCalculation, KnowledgeItem, InventoryItem, PunchListItem, DailyReport, Audit, SafetyBriefing, RFI } from '../store/useAppStore';
 
 enum OperationType {
   CREATE = 'create',
@@ -28,7 +28,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 export function useFirestoreSync() {
-  const { user, setProjects, setCalculations, setKnowledge } = useAppStore();
+  const { user, setProjects, setCalculations, setKnowledge, setInventory, setPunchLists, setDailyReports, setAudits, setSafetyBriefings, setRfis } = useAppStore();
 
   // Sync Projects
   useEffect(() => {
@@ -71,4 +71,88 @@ export function useFirestoreSync() {
     });
     return () => unsubscribe();
   }, [user, setKnowledge]);
+
+  // Sync Inventory
+  useEffect(() => {
+    if (!user) return;
+    const path = 'inventory';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as InventoryItem[];
+      setInventory(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setInventory]);
+
+  // Sync Punch Lists
+  useEffect(() => {
+    if (!user) return;
+    const path = 'punch_lists';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PunchListItem[];
+      setPunchLists(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setPunchLists]);
+
+  // Sync Daily Reports
+  useEffect(() => {
+    if (!user) return;
+    const path = 'daily_reports';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DailyReport[];
+      setDailyReports(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setDailyReports]);
+
+  // Sync Audits
+  useEffect(() => {
+    if (!user) return;
+    const path = 'audits';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Audit[];
+      setAudits(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setAudits]);
+
+  // Sync Safety Briefings
+  useEffect(() => {
+    if (!user) return;
+    const path = 'safety_briefings';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SafetyBriefing[];
+      setSafetyBriefings(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setSafetyBriefings]);
+
+  // Sync RFIs
+  useEffect(() => {
+    if (!user) return;
+    const path = 'rfis';
+    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RFI[];
+      setRfis(items);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+    return () => unsubscribe();
+  }, [user, setRfis]);
 }

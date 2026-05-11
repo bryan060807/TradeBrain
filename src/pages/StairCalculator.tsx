@@ -10,9 +10,12 @@ import { useNavigate } from 'react-router-dom';
 import { PdfExportButton } from '../components/PdfExportButton';
 
 export function StairCalculator() {
-  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, user } = useAppStore();
+  const { preferences, addRecentCalculator, saveCalculation, activeProjectId, projects, user } = useAppStore();
   const navigate = useNavigate();
   
+  const activeProject = projects.find(p => p.id === activeProjectId);
+  const projPrefs = activeProject?.preferences || {};
+
   const [input, setInput] = useState<StairInput>({
     totalRiseInches: 0,
   });
@@ -23,10 +26,10 @@ export function StairCalculator() {
     if (!input.totalRiseInches || input.totalRiseInches <= 0) return;
     
     const res = calculateStairRiseRun(input, {
-      maxRiser: preferences.stairMaxRiser,
-      minTread: preferences.stairMinTread,
-      targetRiser: preferences.stairTargetRiser,
-      targetTread: preferences.stairTargetTread
+      maxRiser: projPrefs?.stairMaxRiser ?? preferences.stairMaxRiser,
+      minTread: projPrefs?.stairMinTread ?? preferences.stairMinTread,
+      targetRiser: projPrefs?.stairTargetRiser ?? preferences.stairTargetRiser,
+      targetTread: projPrefs?.stairTargetTread ?? preferences.stairTargetTread
     });
     
     setResult(res);
@@ -124,7 +127,7 @@ export function StairCalculator() {
                     type="number" step="0.125" 
                     value={input.targetRiserHeight || ''}
                     onChange={(e) => setInput({...input, targetRiserHeight: parseFloat(e.target.value)})} 
-                    placeholder={`Auth defaults: ${preferences.stairTargetRiser}"`}
+                    placeholder={`Auth defaults: ${projPrefs?.stairTargetRiser ?? preferences.stairTargetRiser}"`}
                   />
                 </div>
 
@@ -135,7 +138,7 @@ export function StairCalculator() {
                     type="number" step="0.125" 
                     value={input.targetTreadDepth || ''}
                     onChange={(e) => setInput({...input, targetTreadDepth: parseFloat(e.target.value)})} 
-                    placeholder={`Auth defaults: ${preferences.stairTargetTread}"`}
+                    placeholder={`Auth defaults: ${projPrefs?.stairTargetTread ?? preferences.stairTargetTread}"`}
                   />
                 </div>
 

@@ -22,6 +22,9 @@ export function Settings() {
   const changeRole = async (userId: string, newRole: string) => {
     try {
       await updateDoc(doc(db, 'users', userId), { role: newRole });
+      if (userId === user?.uid) {
+        useAppStore.getState().updateUserRole(newRole as any);
+      }
     } catch (error) {
       console.error("Failed to update role:", error);
     }
@@ -173,15 +176,111 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        {user?.role === 'owner' && (
-          <Card>
-            <CardHeader className="border-b border-white/5 pb-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#D4AF37]" />
-                <CardTitle>Company Roster & Role Assignment</CardTitle>
+        <Card>
+          <CardHeader className="border-b border-white/5 pb-4">
+            <CardTitle>Integrations & Sync</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-1">Procore Sync</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-[#A0A0A0]">Push RFIs, Reports, and Audits to Procore</p>
+                </div>
+                <Button variant="outline" className="text-xs">Connect</Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
+              <div className="flex items-center justify-between p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-1">QuickBooks / Payroll</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-[#A0A0A0]">Sync worker hours from Daily Reports</p>
+                </div>
+                <Button variant="outline" className="text-xs">Connect</Button>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-1">Primavera P6 or MS Project</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-[#A0A0A0]">Export schedule updates</p>
+                </div>
+                <Button variant="outline" className="text-xs">Connect</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[#D4AF37]/30 bg-[#D4AF37]/5">
+          <CardHeader className="border-b border-[#D4AF37]/10 pb-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-[#D4AF37]" />
+              <CardTitle className="text-[#D4AF37]">Viewpoint Simulator</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <p className="text-xs text-[#A0A0A0] leading-relaxed">
+                As an administrative user, you can simulate different role viewpoints to verify the interface and permission structures. Selecting a role below will immediately update your dashboard and access levels.
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {(['owner'] as const).map((role) => (
+                  <Button
+                    key={role}
+                    variant={user?.role === role ? 'primary' : 'outline'}
+                    className={`h-16 flex flex-col gap-1 ${user?.role === role ? 'bg-[#D4AF37] text-black' : 'border-white/10'}`}
+                    onClick={() => {
+                       if (user) changeRole(user.uid, 'owner');
+                    }}
+                  >
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Owner</span>
+                    <span className="text-[9px] opacity-60 uppercase font-light">Lead View</span>
+                  </Button>
+                ))}
+                {(['foreman'] as const).map((role) => (
+                  <Button
+                    key={role}
+                    variant={user?.role === role ? 'primary' : 'outline'}
+                    className={`h-16 flex flex-col gap-1 ${user?.role === role ? 'bg-[#D4AF37] text-black' : 'border-white/10'}`}
+                    onClick={() => {
+                       if (user) changeRole(user.uid, 'foreman');
+                    }}
+                  >
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Foreman</span>
+                    <span className="text-[9px] opacity-60 uppercase font-light">Execution</span>
+                  </Button>
+                ))}
+                {(['laborer'] as const).map((role) => (
+                  <Button
+                    key={role}
+                    variant={user?.role === role ? 'primary' : 'outline'}
+                    className={`h-16 flex flex-col gap-1 ${user?.role === role ? 'bg-[#D4AF37] text-black' : 'border-white/10'}`}
+                    onClick={() => {
+                       if (user) changeRole(user.uid, 'laborer');
+                    }}
+                  >
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Laborer</span>
+                    <span className="text-[9px] opacity-60 uppercase font-light">Workforce</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#D4AF37]" />
+              <CardTitle>Company Roster & Role Assignment</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {user?.role !== 'owner' ? (
+              <div className="bg-red-900/10 border border-red-900/50 rounded-sm p-6 text-center">
+                <Shield className="w-8 h-8 text-red-500/80 mx-auto mb-3" />
+                <p className="text-red-400 font-medium font-serif italic text-lg">Access Restricted</p>
+                <p className="text-red-200/70 text-sm mt-2 max-w-sm mx-auto">
+                  Role assignment and roster management is restricted to Owner accounts. Please contact an administrator to request role changes.
+                </p>
+              </div>
+            ) : (
               <div className="space-y-4">
                 {roster.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
@@ -195,7 +294,7 @@ export function Settings() {
                       </div>
                     </div>
                     
-                    {member.id !== user.uid && (
+                    {member.id !== user?.uid && (
                       <select 
                         className="h-8 rounded-sm border border-white/20 bg-[#0A0A0A] px-2 text-[10px] uppercase tracking-widest text-[#E5E5E5] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                         value={member.role}
@@ -209,9 +308,9 @@ export function Settings() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -9,7 +9,19 @@ import { StairCalculator } from './pages/StairCalculator';
 import { GenericCalculator } from './pages/GenericCalculator';
 import { Settings } from './pages/Settings';
 import { Projects } from './pages/Projects';
+import { ProjectDashboard } from './pages/ProjectDashboard';
+import { Audits } from './pages/Audits';
+import { SafetyBriefings } from './pages/SafetyBriefings';
+import { RFIs } from './pages/RFIs';
+import { MenuPage } from './pages/MenuPage';
+import { Chat } from './pages/Chat';
+import { PlanViewer } from './pages/PlanViewer';
 import { KnowledgeBank } from './pages/KnowledgeBank';
+import { Inventory } from './pages/Inventory';
+import { PunchLists } from './pages/PunchLists';
+import { DailyReports } from './pages/DailyReports';
+import { ProgressMapping } from './pages/ProgressMapping';
+import { Tracker } from './pages/Tracker';
 import { useAppStore } from './store/useAppStore';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,7 +53,18 @@ export default function App() {
             <Route path="calculators/stairRiseRun" element={<StairCalculator />} />
             <Route path="calculators/:id" element={<GenericCalculator />} />
             <Route path="projects" element={<Projects />} />
+            <Route path="tracker" element={<Tracker />} />
+            <Route path="audits" element={<Audits />} />
+            <Route path="safety-briefings" element={<SafetyBriefings />} />
+            <Route path="rfis" element={<RFIs />} />
+            <Route path="chat" element={<Chat />} />
+            <Route path="plan-viewer" element={<PlanViewer />} />
+            <Route path="menu" element={<MenuPage />} />
             <Route path="knowledge" element={<KnowledgeBank />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="punch-lists" element={<PunchLists />} />
+            <Route path="reports" element={<DailyReports />} />
+            <Route path="progress-mapping" element={<ProgressMapping />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
