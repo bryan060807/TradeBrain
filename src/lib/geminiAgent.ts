@@ -1,12 +1,7 @@
 import { GoogleGenAI, Type, FunctionDeclaration, GenerateContentParameters } from '@google/genai';
 
-let ai: GoogleGenAI | null = null;
-
 export function getAi() {
-  if (!ai) {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-  return ai;
+  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 }
 
 const openCalculatorDecl: FunctionDeclaration = {

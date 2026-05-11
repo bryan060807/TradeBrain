@@ -150,7 +150,7 @@ Guidelines:
 `;
 
       const sessionPromise = ai.live.connect({
-        model: "gemini-2.0-flash-exp", // Using latest if available or 1.5 flash
+        model: "gemini-3.1-flash-live-preview", // Required model for Live API
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
