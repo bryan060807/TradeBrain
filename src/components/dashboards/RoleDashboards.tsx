@@ -32,7 +32,7 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
         <CardContent className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="space-y-1">
-              <p className="text-[10px] text-[#707070] uppercase tracking-widest">Active Sites</p>
+              <p className="text-[10px] text-[#707070] uppercase tracking-widest">Active Scopes</p>
               <div className="flex items-center gap-2">
                 <p className="text-2xl text-white font-light">{activeProjectsCount}</p>
                 <TrendingUp className="w-4 h-4 text-green-500/50" />
@@ -43,7 +43,7 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
               <p className="text-2xl text-[#D4AF37] font-light">{openRfis}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-[#707070] uppercase tracking-widest">Team Size</p>
+              <p className="text-[10px] text-[#707070] uppercase tracking-widest">Staff Count</p>
               <p className="text-2xl text-white font-light">12</p>
             </div>
             <div className="space-y-1">
@@ -58,7 +58,7 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
       <Card className="bg-[#121212]/50 border-white/5 lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#D4AF37]" /> Site Reports
+            <FileText className="w-4 h-4 text-[#D4AF37]" /> Shift Reports
           </CardTitle>
           <Button variant="ghost" size="sm" className="text-[10px] text-[#707070]" onClick={() => navigate('/reports')}>View All</Button>
         </CardHeader>
@@ -67,14 +67,14 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
             recentReports.map(report => (
               <div key={report.id} className="p-4 bg-white/5 border border-white/5 rounded-sm hover:border-[#D4AF37]/30 transition-colors">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-sm font-medium text-white">Daily Summary - Site Alpha</h4>
+                  <h4 className="text-sm font-medium text-white">Daily Summary</h4>
                   <span className="text-[10px] text-[#707070]">{new Date(report.date).toLocaleDateString()}</span>
                 </div>
                 <p className="text-xs text-[#A0A0A0] line-clamp-2 font-light italic">"{report.workCompleted}"</p>
               </div>
             ))
           ) : (
-            <div className="py-12 text-center text-[#505050] text-xs">No recent site reports found.</div>
+            <div className="py-12 text-center text-[#505050] text-xs">No recent shift reports found.</div>
           )}
         </CardContent>
       </Card>
@@ -87,19 +87,23 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
         <CardContent className="space-y-3">
           <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/projects')}>
             <Plus className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Establish New Project</span>
+            <span className="text-xs">Initialize Scope</span>
           </Button>
           <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/rfis')}>
             <AlertCircle className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Review Pending RFIs</span>
+            <span className="text-xs">Review Open RFIs</span>
           </Button>
           <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/audits')}>
             <ClipboardCheck className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Compliance Audit</span>
+            <span className="text-xs">Safety Audits</span>
           </Button>
           <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/progress-mapping')}>
             <Box className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">3D Site Intelligence</span>
+            <span className="text-xs">3D Progress Mapping</span>
+          </Button>
+          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-[#D4AF37]/30 group" onClick={() => navigate('/workforce')}>
+            <Users className="w-4 h-4 text-[#D4AF37]" />
+            <span className="text-xs text-[#D4AF37] font-medium">Workforce / Roster</span>
           </Button>
         </CardContent>
       </Card>
@@ -119,11 +123,11 @@ export function ForemanDashboard({ user, activeProject, punchLists, dailyReports
         <CardHeader className="border-b border-white/5 pb-4">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl text-white">{activeProject?.name || 'Assigned Site'}</CardTitle>
-              <p className="text-xs text-[#707070] mt-1">{activeProject?.location || 'Awaiting site confirmation'}</p>
+              <CardTitle className="text-xl text-white">{activeProject?.name || 'Assigned Scope'}</CardTitle>
+              <p className="text-xs text-[#707070] mt-1">{activeProject?.location || 'Awaiting deployment confirmation'}</p>
             </div>
             <div className="px-3 py-1 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full">
-              <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Active Execution</span>
+              <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest">Active Objective</span>
             </div>
           </div>
         </CardHeader>
@@ -132,11 +136,11 @@ export function ForemanDashboard({ user, activeProject, punchLists, dailyReports
             <div className="p-4 bg-white/5 rounded-sm border border-white/5">
               <div className="flex items-center gap-3 mb-4">
                 <CheckSquare className="w-5 h-5 text-[#D4AF37]" />
-                <h4 className="text-xs uppercase tracking-widest text-[#A0A0A0]">Punch List Progress</h4>
+                <h4 className="text-xs uppercase tracking-widest text-[#A0A0A0]">Final Checks</h4>
               </div>
               <div className="flex items-end gap-3">
                 <p className="text-3xl text-white font-light">{projectPunchList.length - openPunchItems}/{projectPunchList.length}</p>
-                <p className="text-[10px] text-[#707070] mb-2 uppercase">Tasks Resolved</p>
+                <p className="text-[10px] text-[#707070] mb-2 uppercase">Checks Completed</p>
               </div>
               <div className="w-full bg-[#1a1a1a] h-1 rounded-full mt-4">
                 <div 
@@ -152,9 +156,9 @@ export function ForemanDashboard({ user, activeProject, punchLists, dailyReports
                   <Clock className="w-5 h-5 text-[#D4AF37]" />
                   <h4 className="text-xs uppercase tracking-widest text-[#A0A0A0]">Crew Status</h4>
                 </div>
-                <p className="text-sm text-white font-light">4 Crew Members Active</p>
+                <p className="text-sm text-white font-light">12 Personnel Active</p>
               </div>
-              <Button variant="outline" size="sm" className="mt-4 text-[10px] h-8 border-white/10" onClick={() => navigate('/projects')}>Manage Crew</Button>
+              <Button variant="outline" size="sm" className="mt-4 text-[10px] h-8 border-white/10" onClick={() => navigate('/workforce')}>Manage Crew</Button>
             </div>
           </div>
         </CardContent>
@@ -163,34 +167,34 @@ export function ForemanDashboard({ user, activeProject, punchLists, dailyReports
       {/* Foreman Tools */}
       <Card className="bg-[#0F0F0F] border-white/10">
         <CardHeader>
-          <CardTitle className="text-xs uppercase tracking-[0.2em] text-[#707070]">Field Operations</CardTitle>
+          <CardTitle className="text-xs uppercase tracking-[0.2em] text-[#707070]">Foreman Protocol</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-white/10 border-white/10" onClick={() => navigate('/reports')}>
             <FileText className="w-4 h-4 text-[#D4AF37]" />
             <div className="text-left">
-              <p className="text-xs font-medium">Daily Report</p>
+              <p className="text-xs font-medium">Shift Report</p>
               <p className="text-[9px] text-[#505050] uppercase mt-0.5">Sync Site Activities</p>
             </div>
           </Button>
           <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-white/10 border-white/10" onClick={() => navigate('/punch-lists')}>
             <Plus className="w-4 h-4 text-[#D4AF37]" />
             <div className="text-left">
-              <p className="text-xs font-medium">Add Deficiency</p>
-              <p className="text-[9px] text-[#505050] uppercase mt-0.5">Punch List Entry</p>
+              <p className="text-xs font-medium">Add Finding</p>
+              <p className="text-[9px] text-[#505050] uppercase mt-0.5">Quality Control Entry</p>
             </div>
           </Button>
-          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-white/10 border-white/10" onClick={() => navigate('/inventory')}>
-            <Wrench className="w-4 h-4 text-[#D4AF37]" />
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-white/10 border-white/10" onClick={() => navigate('/rfis')}>
+            <FileText className="w-4 h-4 text-[#D4AF37]" />
             <div className="text-left">
-              <p className="text-xs font-medium">Material Tracker</p>
-              <p className="text-[9px] text-[#505050] uppercase mt-0.5">Verify Inventory</p>
+              <p className="text-xs font-medium">Create RFI</p>
+              <p className="text-[9px] text-[#505050] uppercase mt-0.5">Information Request</p>
             </div>
           </Button>
           <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-white/10 border-white/10" onClick={() => navigate('/progress-mapping')}>
             <Box className="w-4 h-4 text-[#D4AF37]" />
             <div className="text-left">
-              <p className="text-xs font-medium">3D Walkthrough</p>
+              <p className="text-xs font-medium">3D Scan</p>
               <p className="text-[9px] text-[#505050] uppercase mt-0.5">Visual Progress</p>
             </div>
           </Button>
@@ -218,12 +222,12 @@ export function LaborerDashboard({ user, activeProject, savedCalculations }: Das
           <div className="p-6 bg-gradient-to-r from-[#D4AF37]/10 to-transparent rounded-sm border border-[#D4AF37]/20">
             <h3 className="text-sm font-medium text-white mb-2">Primary Assignment</h3>
             <p className="text-xl text-[#E5E5E5] font-light">
-              {activeProject ? `Reporting to ${activeProject.name}` : 'Awaiting Daily Deployment'}
+              {activeProject ? `Working on ${activeProject.name}` : 'Awaiting Deployment Assignment'}
             </p>
             {activeProject && (
               <div className="mt-4 flex gap-4">
                 <Button size="sm" variant="outline" className="text-[10px] border-[#D4AF37]/30 text-[#D4AF37]" onClick={() => navigate('/plan-viewer')}>
-                  <Layers className="w-3 h-3 mr-2" /> View Site Plans
+                  <Layers className="w-3 h-3 mr-2" /> View Plans
                 </Button>
                 <Button size="sm" variant="outline" className="text-[10px] border-white/10" onClick={() => navigate('/safety-briefings')}>
                   <ShieldCheck className="w-3 h-3 mr-2" /> Daily Briefing

@@ -12,18 +12,32 @@ export function Audits() {
   
   const [newAudit, setNewAudit] = useState({
     projectId: activeProjectId || '',
-    type: 'Safety',
+    type: 'Multipoint',
     date: new Date().toISOString().split('T')[0],
     inspector: user?.email || '',
-    checklistText: "Verify Hardhats\\nCheck Fall Protection\\nScaffold Tags Current",
+    checklistText: "Verify all lights\\nCheck tire tread depth\\nInspect brake pads",
   });
+
+  const auditTemplates: Record<string, string> = {
+    'Custom': '',
+    'OSHA 1926 Safety Union Standard': 'Verify all union workers have current required certifications on file\\nCheck plumb and square on all load-bearing walls\\nVerify header sizing and jack studs\\nInspect anchor bolts and sill plates\\nCheck fire blocking installation',
+    'Union Pre-Pour Inspection': 'Verify trench depth and width meet local union code\\nCheck rebar sizing, spacing, and clearance\\nInspect vapor barrier integrity\\nVerify formwork bracing and stakes\\nCheck placement of embedded conduit/plumbing',
+    'OSHA Safety Walkthrough': 'Check PPE compliance (Hardhats, Safety Glasses)\\nInspect scaffolding tags and guardrails\\nVerify GFCI protection on all temporary power\\nCheck trench shoring/sloping\\nEnsure fire extinguishers are present and charged',
+    'Punch List (Final)': 'Check all interior paint for touchups\\nTest all switches, outlets, and fixtures\\nVerify HVAC register airflow\\nInspect doors for smooth operation and latching\\nCheck flooring for defects/scratches',
+  };
+
+  const handleTemplateSelect = (templateKey: string) => {
+    if (auditTemplates[templateKey]) {
+       setNewAudit({ ...newAudit, checklistText: auditTemplates[templateKey], type: templateKey === 'Custom' ? newAudit.type : templateKey });
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
     try {
-      const checklistArray = newAudit.checklistText.split('\\n').filter(s => s.trim() !== '').map(item => ({
+      const checklistArray = newAudit.checklistText.split('\n').filter(s => s.trim() !== '').map(item => ({
         item: item.trim(),
         pass: null as null | boolean,
       }));
@@ -39,10 +53,10 @@ export function Audits() {
       });
       setNewAudit({
         projectId: activeProjectId || '',
-        type: 'Safety',
+        type: 'Multipoint',
         date: new Date().toISOString().split('T')[0],
         inspector: user?.email || '',
-        checklistText: "Verify Hardhats\\nCheck Fall Protection\\nScaffold Tags Current",
+        checklistText: "Verify all lights\\nCheck tire tread depth\\nInspect brake pads",
       });
       setIsAdding(false);
     } catch (err) {
@@ -81,8 +95,8 @@ export function Audits() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-end border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-3xl font-serif italic font-light text-white">Inspections & Audits</h1>
-          <p className="text-sm text-[#A0A0A0] mt-1">Conduct site safety and compliance checks</p>
+          <h1 className="text-3xl font-serif italic font-light text-white">Audits</h1>
+          <p className="text-sm text-[#A0A0A0] mt-1">Conduct safety and quality inspections</p>
         </div>
         <div className="flex gap-4 items-center">
            <select
@@ -107,6 +121,18 @@ export function Audits() {
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2 flex gap-4">
+                   <div className="flex-1">
+                     <Label>Load Template</Label>
+                     <select 
+                       className="w-full flex h-10 rounded-sm border border-white/20 bg-[#161616] px-3 py-2 text-sm text-[#D4AF37] focus:ring-[#D4AF37]"
+                       onChange={e => handleTemplateSelect(e.target.value)}
+                     >
+                       <option value="Custom">Custom / Blank</option>
+                       {Object.keys(auditTemplates).filter(k => k !== 'Custom').map(k => <option key={k} value={k}>{k}</option>)}
+                     </select>
+                   </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Project</Label>
                   <select 
@@ -120,32 +146,27 @@ export function Audits() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Audit Type</Label>
-                  <select 
+                  <Label>Inspection Type</Label>
+                  <Input 
                     className="w-full flex h-10 rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-2 text-sm text-[#E5E5E5] focus:ring-[#D4AF37]"
                     value={newAudit.type}
                     onChange={e => setNewAudit({...newAudit, type: e.target.value})}
-                  >
-                    <option value="Safety">Safety</option>
-                    <option value="OSHA Compliance">OSHA Compliance</option>
-                    <option value="Quality Assurance">Quality Assurance</option>
-                    <option value="Daily Walkthrough">Daily Walkthrough</option>
-                  </select>
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
                   <Input type="date" value={newAudit.date} onChange={e => setNewAudit({...newAudit, date: e.target.value})} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Inspector/Auditor</Label>
+                  <Label>Inspector</Label>
                   <Input value={newAudit.inspector} onChange={e => setNewAudit({...newAudit, inspector: e.target.value})} required />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Checklist Items (One per line)</Label>
                   <textarea 
                     className="w-full min-h-[100px] rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-2 text-sm text-[#E5E5E5] focus:ring-1 focus:ring-[#D4AF37]"
-                    value={newAudit.checklistText} 
-                    onChange={e => setNewAudit({...newAudit, checklistText: e.target.value})} 
+                    value={newAudit.checklistText.replace(/\\n/g, '\n')} 
+                    onChange={e => setNewAudit({...newAudit, checklistText: e.target.value.replace(/\n/g, '\\n')})} 
                     placeholder="Enter items to check..."
                     required
                   />

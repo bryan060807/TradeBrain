@@ -17,6 +17,24 @@ export function SafetyBriefings() {
     content: '',
   });
 
+  const safetyTemplates: Record<string, string> = {
+    'Custom': '',
+    'Fall Protection (OSHA 1926.501)': '1. Always inspect your harness, lanyard, and anchor point before use.\\n2. Tie off when working 6 feet or more above lower levels.\\n3. Keep lanyards above the D-ring to minimize fall distance.\\n4. Ensure guardrails are securely in place and meet height requirements.',
+    'Toolbox Talk: Electrical Hazards': '1. Treat all wires as live until verified otherwise.\\n2. Only use properly grounded (GFCI) cords and outlets.\\n3. Inspect all power tools for frayed cords or damaged plugs before use.\\n4. Never use electrical tools in wet areas without proper protection.',
+    'Scaffold Safety Awareness': '1. Check for green tags before mounting any scaffold.\\n2. Do NOT climb cross braces.\\n3. Hardhats are required when working on or around scaffolding.\\n4. Ensure all wheels on mobile scaffolds are locked before climbing.',
+    'PPE Enforcement Refresher': '1. Hard hats and safety glasses must be worn at all times on the project floor.\\n2. High-visibility vests must be worn when working near equipment.\\n3. Closed-toe, puncture-resistant boots are mandatory.\\n4. Use appropriate gloves for material handling.',
+  };
+
+  const handleTemplateSelect = (templateKey: string) => {
+    if (safetyTemplates[templateKey] !== undefined) {
+      setNewBriefing({ 
+        ...newBriefing, 
+        title: templateKey === 'Custom' ? newBriefing.title : templateKey, 
+        content: safetyTemplates[templateKey] 
+      });
+    }
+  };
+
   const [signatureName, setSignatureName] = useState('');
   const [signingId, setSigningId] = useState<string | null>(null);
 
@@ -98,6 +116,18 @@ export function SafetyBriefings() {
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2 flex gap-4">
+                   <div className="flex-1">
+                     <Label>Load Template</Label>
+                     <select 
+                       className="w-full flex h-10 rounded-sm border border-white/20 bg-[#161616] px-3 py-2 text-sm text-[#D4AF37] focus:ring-[#D4AF37]"
+                       onChange={e => handleTemplateSelect(e.target.value)}
+                     >
+                       <option value="Custom">Custom / Blank</option>
+                       {Object.keys(safetyTemplates).filter(k => k !== 'Custom').map(k => <option key={k} value={k}>{k}</option>)}
+                     </select>
+                   </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Briefing Title/Topic</Label>
                   <Input value={newBriefing.title} onChange={e => setNewBriefing({...newBriefing, title: e.target.value})} required />
@@ -129,7 +159,7 @@ export function SafetyBriefings() {
               </div>
               <div className="flex justify-end gap-2 mt-6">
                  <Button variant="ghost" type="button" onClick={() => setIsAdding(false)}>Cancel</Button>
-                 <Button type="submit">Publish Briefing</Button>
+                 <Button type="submit">Publish Talk</Button>
               </div>
             </form>
           </CardContent>
@@ -203,7 +233,7 @@ export function SafetyBriefings() {
         {filteredBriefings.length === 0 && (
           <div className="py-12 text-center text-[#A0A0A0]">
             <ShieldCheck className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p>No safety briefings found.</p>
+            <p>No toolbox talks found.</p>
           </div>
         )}
       </div>

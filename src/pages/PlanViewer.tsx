@@ -4,13 +4,11 @@ import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/
 import { PenTool, Eraser, Undo, Redo, Download, ZoomIn, ZoomOut, Save } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
-const mockPlans = [
-  { id: '1', title: 'A1.0 - Floor Plan', url: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=1600' },
-  { id: '2', title: 'S1.0 - Foundation Plan', url: 'https://images.unsplash.com/photo-1541888086425-d81bb19240f5?auto=format&fit=crop&q=80&w=1600' },
-];
+import { mockBlueprints } from '../lib/mockBlueprints';
 
 export function PlanViewer() {
-  const [activePlan, setActivePlan] = useState(mockPlans[0]);
+  const [activePlan, setActivePlan] = useState(mockBlueprints[0]);
+  const [localImage, setLocalImage] = useState<string | null>(null);
   const canvasRef = useRef<ReactSketchCanvasRef>(null);
   const [isEraser, setIsEraser] = useState(false);
   const [scale, setScale] = useState(1);
@@ -32,16 +30,31 @@ export function PlanViewer() {
     setIsEraser(!isEraser);
   };
 
+  const currentImageUrl = localImage || activePlan.url;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+       const url = URL.createObjectURL(e.target.files[0]);
+       setLocalImage(url);
+    }
+  };
+
+  const handlePlanSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLocalImage(null);
+    setActivePlan(mockBlueprints.find(p => p.id === e.target.value) || mockBlueprints[0]);
+  };
+
   const handleSave = async () => {
     if (!canvasRef.current) return;
     try {
       const dataUrl = await canvasRef.current.exportImage("png");
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `${activePlan.title}-markup.png`;
+      a.download = `markup.png`;
       a.click();
     } catch (e) {
       console.error(e);
+      alert("Could not export image. Please try uploading a local file or checking browser permissions.");
     }
   };
 
@@ -50,15 +63,21 @@ export function PlanViewer() {
       <div className="flex justify-between items-end border-b border-white/10 pb-4 shrink-0">
         <div>
           <h1 className="text-3xl font-serif italic font-light text-white">Digital Plan View & Markup</h1>
-          <p className="text-sm text-[#A0A0A0] mt-1">View updated blueprints and annotate drawings</p>
+          <p className="text-sm text-[#A0A0A0] mt-1">View blueprints, upload plans, and annotate drawings</p>
         </div>
         <div className="flex gap-4 items-center">
+            <div className="relative">
+              <input type="file" title="Upload" id="plan-upload" accept="image/*" onChange={handleFileUpload} className="hidden" />
+              <label htmlFor="plan-upload" className="cursor-pointer flex items-center h-9 rounded-sm border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3 text-xs text-[#D4AF37] hover:bg-[#D4AF37]/20 transition-colors">
+                Upload Plan
+              </label>
+            </div>
            <select
-              className="h-9 rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-1 text-xs text-[#E5E5E5] focus:ring-[#D4AF37]"
+              className="h-9 rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-1 text-xs text-[#E5E5E5] focus:ring-[#D4AF37] max-w-[200px] truncate"
               value={activePlan.id}
-              onChange={(e) => setActivePlan(mockPlans.find(p => p.id === e.target.value) || mockPlans[0])}
+              onChange={handlePlanSelect}
            >
-              {mockPlans.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+              {mockBlueprints.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
            </select>
         </div>
       </div>
@@ -112,7 +131,7 @@ export function PlanViewer() {
                   strokeWidth={4}
                   strokeColor="#ff3333"
                   canvasColor="transparent"
-                  backgroundImage={activePlan.url}
+                  backgroundImage={currentImageUrl}
                   preserveBackgroundImageAspectRatio="xMidYMid meet"
                   className="w-full h-full border-none!"
                />

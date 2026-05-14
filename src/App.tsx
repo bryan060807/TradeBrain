@@ -22,6 +22,7 @@ import { PunchLists } from './pages/PunchLists';
 import { DailyReports } from './pages/DailyReports';
 import { ProgressMapping } from './pages/ProgressMapping';
 import { Tracker } from './pages/Tracker';
+import { WorkforceManagement } from './pages/WorkforceManagement';
 import { useAppStore } from './store/useAppStore';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="reports" element={<DailyReports />} />
             <Route path="progress-mapping" element={<ProgressMapping />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="workforce" element={<WorkforceManagement />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../components/ui';
 import { useAppStore } from '../store/useAppStore';
 import { db } from '../services/firebase';
@@ -6,6 +7,7 @@ import { collection, query, onSnapshot, doc, updateDoc } from 'firebase/firestor
 import { Users, Shield, Crown } from 'lucide-react';
 
 export function Settings() {
+  const navigate = useNavigate();
   const { preferences, updatePreferences, user } = useAppStore();
   const [isSaved, setIsSaved] = React.useState(false);
   const [roster, setRoster] = React.useState<any[]>([]);
@@ -123,6 +125,23 @@ export function Settings() {
                   onChange={(e) => handleUpdate('defaultCrewAssigned', e.target.value)} 
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-white/5 pb-4">
+            <CardTitle>Workforce & Roster</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border border-white/5 bg-[#0A0A0A] rounded-sm">
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-1">Company Roster Configuration</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-[#A0A0A0]">Add union members, update roles, edit staff details</p>
+                </div>
+                <Button onClick={() => navigate('/workforce')} className="text-xs shrink-0 self-start sm:self-auto min-w-[140px] bg-white/10 hover:bg-white/20 border border-white/20">
+                  Manage Roster &rarr;
+                </Button>
             </div>
           </CardContent>
         </Card>

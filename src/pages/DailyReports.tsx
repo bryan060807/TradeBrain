@@ -18,6 +18,42 @@ export function DailyReports() {
     materialsUsed: '',
   });
 
+  const dailyReportTemplates: Record<string, { work: string; materials: string; hours: string }> = {
+    'Custom': { work: '', materials: '', hours: '' },
+    'Concrete Pour (Foundation)': {
+      work: 'Completed setup of vapor barrier and rebar grid for Sector B. 40 cubic yards poured. Finished vibrating and screeding. Curing compound applied to final surface.',
+      materials: '40 cu yds 4000psi concrete, 1500 ft #4 rebar, 20 gallons curing compound.',
+      hours: '56'
+    },
+    'Framing (Level 1)': {
+      work: 'Erected exterior wall panels for North and East elevations. Plumbed and braced structural members. Began installing interior load-bearing headers.',
+      materials: '250 2x6x10 studs, 40 2x4x10 studs, 2 boxes 16d nails, 15 sheets OSB.',
+      hours: '40'
+    },
+    'MEP Rough-in': {
+      work: 'Electricians ran conduit for main lighting circuits in south wing. Plumbers completed DWV (Drain Waste Vent) stack through 2nd floor chasing. Passed initial rough-in pressure tests.',
+      materials: '400ft 3/4" EMT, 20 junction boxes, 80ft 3" PVC pipe, PVC primer/cement.',
+      hours: '64'
+    },
+    'Rain Delay / Standby': {
+      work: 'Heavy rain starting at 0800. Exterior site work halted. Crew pumped out accumulated water from foundation trenches. Relocated to interior cleanup and material sorting.',
+      materials: 'Fuel for trash pumps, 4 heavy-duty tarps.',
+      hours: '16'
+    }
+  };
+
+  const handleTemplateSelect = (templateKey: string) => {
+    const t = dailyReportTemplates[templateKey];
+    if (t) {
+      setNewReport(prev => ({
+        ...prev,
+        workCompleted: t.work,
+        materialsUsed: t.materials,
+        workerHours: t.hours
+      }));
+    }
+  };
+
   const [photos, setPhotos] = useState<string[]>([]);
 
   const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +126,18 @@ export function DailyReports() {
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2 flex gap-4">
+                   <div className="flex-1">
+                     <Label>Load Template</Label>
+                     <select 
+                       className="w-full flex h-10 rounded-sm border border-white/20 bg-[#161616] px-3 py-2 text-sm text-[#D4AF37] focus:ring-[#D4AF37]"
+                       onChange={e => handleTemplateSelect(e.target.value)}
+                     >
+                       <option value="Custom">Custom / Blank</option>
+                       {Object.keys(dailyReportTemplates).filter(k => k !== 'Custom').map(k => <option key={k} value={k}>{k}</option>)}
+                     </select>
+                   </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
                   <Input type="date" value={newReport.date} onChange={e => setNewReport({...newReport, date: e.target.value})} required />

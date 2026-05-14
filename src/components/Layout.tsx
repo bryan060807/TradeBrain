@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Calculator, Folder, Settings, Mic, MicOff, AlertCircle, ExternalLink, Library, Wrench, CheckSquare, FileText, Map, ClipboardCheck, ShieldCheck, WifiOff, Menu, MessageSquare, Layers, Box } from 'lucide-react';
+import { Home, Calculator, Folder, Settings, Mic, MicOff, AlertCircle, ExternalLink, Library, Wrench, CheckSquare, FileText, Map, ClipboardCheck, ShieldCheck, WifiOff, Menu, MessageSquare, Layers, Box, Users } from 'lucide-react';
 import { useLiveAgent } from '../hooks/useLiveAgent';
 import { useFirestoreSync } from '../hooks/useFirestoreSync';
 import { useAppStore } from '../store/useAppStore';
@@ -19,6 +19,7 @@ export const ALL_MODULES = [
   { id: 'inventory', path: '/inventory', label: 'Inventory', icon: Wrench },
   { id: 'punch-lists', path: '/punch-lists', label: 'Punch List', icon: CheckSquare },
   { id: 'reports', path: '/reports', label: 'Reports', icon: FileText },
+  { id: 'workforce', path: '/workforce', label: 'Workforce', icon: Users },
 ];
 
 export function Layout() {

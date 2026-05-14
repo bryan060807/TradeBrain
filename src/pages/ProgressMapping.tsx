@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button } from '../components/
 import { 
   Box, Maximize2, ExternalLink, Calendar, RefreshCcw, 
   Info, Layers, Zap, Eye, SplitSquareVertical, 
-  ChevronRight, Camera, HardHat, Crosshair, MessageSquare
+  ChevronRight, Camera, HardHat, Crosshair, MessageSquare, Wrench
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { motion, AnimatePresence } from 'motion/react';
@@ -205,11 +205,11 @@ export function ProgressMapping() {
               
               <div className="space-y-3 pt-4 border-t border-white/5 text-[10px]">
                 <div className="flex justify-between">
-                  <span className="text-[#505050]">Slab Compliance</span>
+                  <span className="text-[#505050]">Lift Clearance</span>
                   <span className="text-green-500">Passed</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#505050]">MEP Clash Check</span>
+                  <span className="text-[#505050]">Part Fitment Check</span>
                   <span className="text-orange-500">2 Warnings</span>
                 </div>
               </div>
@@ -300,7 +300,7 @@ export function ProgressMapping() {
                 <Button variant="outline" className="bg-black/80 border-white/10 text-white backdrop-blur-md h-12 px-6 gap-3 group hover:border-[#D4AF37]/50 transition-all">
                   <Layers className="w-4 h-4 text-[#D4AF37]" />
                   <div className="text-left">
-                    <p className="text-[8px] uppercase tracking-widest text-[#707070]">BIM Shell</p>
+                    <p className="text-[8px] uppercase tracking-widest text-[#707070]">CAD Shell</p>
                     <p className="text-[10px] text-white">Version 2.4 Active</p>
                   </div>
                 </Button>
@@ -314,8 +314,8 @@ export function ProgressMapping() {
               </div>
 
               <div className="bg-[#D4AF37] text-black px-6 py-3 rounded-sm font-bold shadow-2xl pointer-events-auto cursor-pointer hover:bg-white transition-colors flex items-center gap-3">
-                <HardHat className="w-4 h-4" />
-                <span className="text-[10px] uppercase tracking-widest">Mark Field Verification</span>
+                <Wrench className="w-4 h-4" />
+                <span className="text-[10px] uppercase tracking-widest">Mark Inspector Verified</span>
               </div>
             </div>
           </div>

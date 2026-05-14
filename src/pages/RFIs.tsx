@@ -21,6 +21,37 @@ export function RFIs() {
     assignedTo: '',
   });
 
+  const rfiTemplates: Record<string, { title: string; question: string; proposed: string }> = {
+    'Custom': { title: '', question: '', proposed: '' },
+    'Structural Interference': {
+      title: 'Structural Steel Interference with HVAC',
+      question: 'HVAC duct routed per plan M1.0 conflicts with steel beam W12x26 at gridline B4. Beam is 6" lower than indicated on structural drawings.',
+      proposed: 'Route ducting below beam and drop ceiling height locally by 8", OR split duct into two smaller sections to pass through web openings if approved by Structural Engineer.'
+    },
+    'Material Substitution': {
+      title: 'Material Substitution Request: Interior Paint',
+      question: 'Specified Sherwin Williams Promar 200 is currently on a 4-week backorder from local distributors.',
+      proposed: 'Substitute with Benjamin Moore Ultra Spec 500 at no additional cost to owner.'
+    },
+    'Plan Discrepancy': {
+      title: 'Dimension Discrepancy on A2.1',
+      question: 'Wall dimension on plan A2.1 shows 14\'-6", but the associated details on A8.4 indicate the room width should be 15\'-0".',
+      proposed: 'Requesting clarification from Architect on the intended dimension before framing commences.'
+    }
+  };
+
+  const handleTemplateSelect = (templateKey: string) => {
+    const t = rfiTemplates[templateKey];
+    if (t) {
+      setNewRfi(prev => ({
+        ...prev,
+        title: t.title,
+        question: t.question,
+        proposedSolution: t.proposed
+      }));
+    }
+  };
+
   const [answerText, setAnswerText] = useState('');
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -80,7 +111,7 @@ export function RFIs() {
       <div className="flex justify-between items-end border-b border-white/10 pb-4">
         <div>
           <h1 className="text-3xl font-serif italic font-light text-white">Requests for Information</h1>
-          <p className="text-sm text-[#A0A0A0] mt-1">Submit and track RFIs from the site</p>
+          <p className="text-sm text-[#A0A0A0] mt-1">Submit, track, and resolve documentation queries</p>
         </div>
         <div className="flex gap-4 items-center">
            <select
@@ -100,13 +131,25 @@ export function RFIs() {
       {isAdding && (
         <Card className="bg-[#161616]">
           <CardHeader>
-            <CardTitle className="text-lg">Submit New RFI</CardTitle>
+            <CardTitle className="text-lg">Draft RFI</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2 flex gap-4">
+                   <div className="flex-1">
+                     <Label>Load Template</Label>
+                     <select 
+                       className="w-full flex h-10 rounded-sm border border-white/20 bg-[#161616] px-3 py-2 text-sm text-[#D4AF37] focus:ring-[#D4AF37]"
+                       onChange={e => handleTemplateSelect(e.target.value)}
+                     >
+                       <option value="Custom">Custom / Blank</option>
+                       {Object.keys(rfiTemplates).filter(k => k !== 'Custom').map(k => <option key={k} value={k}>{k}</option>)}
+                     </select>
+                   </div>
+                </div>
                 <div className="space-y-2">
-                  <Label>RFI Number (Optional)</Label>
+                  <Label>RFI # (Optional)</Label>
                   <Input value={newRfi.number} onChange={e => setNewRfi({...newRfi, number: e.target.value})} placeholder="e.g. RFI-001" />
                 </div>
                 <div className="space-y-2">
@@ -155,13 +198,13 @@ export function RFIs() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Assigned To / Sent To</Label>
-                  <Input value={newRfi.assignedTo} onChange={e => setNewRfi({...newRfi, assignedTo: e.target.value})} placeholder="e.g. Architect, Engineer" />
+                  <Label>Supplier / Tech Line</Label>
+                  <Input value={newRfi.assignedTo} onChange={e => setNewRfi({...newRfi, assignedTo: e.target.value})} placeholder="e.g. NAPA, AutoZone, Master Tech" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6 border-t border-white/5 pt-4">
                  <Button variant="ghost" type="button" onClick={() => setIsAdding(false)}>Cancel</Button>
-                 <Button type="submit">Submit RFI</Button>
+                 <Button type="submit">Submit Request</Button>
               </div>
             </form>
           </CardContent>
@@ -254,7 +297,7 @@ export function RFIs() {
                          <Button variant="outline" className="h-8 text-xs" onClick={() => updateStatus(rfi.id, 'In Review')}>Mark In Review</Button>
                        )}
                        {rfi.status !== 'Closed' && (
-                         <Button variant="outline" className="h-8 text-xs" onClick={() => updateStatus(rfi.id, 'Closed')}>Close RFI</Button>
+                         <Button variant="outline" className="h-8 text-xs" onClick={() => updateStatus(rfi.id, 'Closed')}>Close Request</Button>
                        )}
                     </div>
                   </div>
@@ -266,7 +309,7 @@ export function RFIs() {
         {filteredRfis.length === 0 && (
           <div className="py-12 text-center text-[#A0A0A0]">
             <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p>No RFIs found.</p>
+            <p>No requests found.</p>
           </div>
         )}
       </div>
