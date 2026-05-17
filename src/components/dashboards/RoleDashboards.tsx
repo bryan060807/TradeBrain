@@ -85,25 +85,35 @@ export function OwnerDashboard({ user, projects, dailyReports, rfis }: Dashboard
           <CardTitle className="text-sm uppercase tracking-widest text-[#707070]">Executive Controls</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/projects')}>
-            <Plus className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Initialize Scope</span>
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/projects')}>
+            <Plus className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] tracking-widest font-bold leading-tight">Initialize Scope</span>
+            </div>
           </Button>
-          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/rfis')}>
-            <AlertCircle className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Review Open RFIs</span>
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/rfis')}>
+            <AlertCircle className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] tracking-widest font-bold leading-tight">Review Open RFIs</span>
+            </div>
           </Button>
-          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/audits')}>
-            <ClipboardCheck className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">Safety Audits</span>
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/audits')}>
+            <ClipboardCheck className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] tracking-widest font-bold leading-tight">Safety Audits</span>
+            </div>
           </Button>
-          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10" onClick={() => navigate('/progress-mapping')}>
-            <Box className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs">3D Progress Mapping</span>
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-[#D4AF37]/10 border-white/10 group" onClick={() => navigate('/progress-mapping')}>
+            <Box className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] tracking-widest font-bold leading-tight">3D Progress Mapping</span>
+            </div>
           </Button>
-          <Button className="w-full justify-start gap-3 h-12 bg-white/5 hover:bg-[#D4AF37]/10 border-[#D4AF37]/30 group" onClick={() => navigate('/workforce')}>
-            <Users className="w-4 h-4 text-[#D4AF37]" />
-            <span className="text-xs text-[#D4AF37] font-medium">Workforce / Roster</span>
+          <Button className="w-full justify-start gap-4 h-14 bg-white/5 hover:bg-[#D4AF37]/10 border-[#D4AF37]/30 group" onClick={() => navigate('/workforce')}>
+            <Users className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] tracking-widest font-bold text-[#D4AF37] leading-tight">Workforce / Roster</span>
+            </div>
           </Button>
         </CardContent>
       </Card>
