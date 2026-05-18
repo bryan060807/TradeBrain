@@ -67,6 +67,8 @@ export type DailyReport = {
   workCompleted: string;
   workerHours: number;
   materialsUsed: string;
+  incidents?: string;
+  safetyBriefingId?: string;
   photoUrls: string[];
   ownerId: string;
   createdAt: number;

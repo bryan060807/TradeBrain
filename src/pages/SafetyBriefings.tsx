@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Label } from '../components/ui';
-import { ShieldCheck, Plus, Link as LinkIcon, Users } from 'lucide-react';
+import { ShieldCheck, Plus, Link as LinkIcon, Users, Bot } from 'lucide-react';
 import { db } from '../services/firebase';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { generateSafetyBriefingWithGemini } from '../lib/geminiAgent';
 
 export function SafetyBriefings() {
-  const { safetyBriefings, projects, activeProjectId, user } = useAppStore();
+  const { safetyBriefings, projects, activeProjectId, user, dailyReports } = useAppStore();
   const [isAdding, setIsAdding] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [filterProject, setFilterProject] = useState(activeProjectId || 'all');
   
   const [newBriefing, setNewBriefing] = useState({
@@ -37,6 +39,34 @@ export function SafetyBriefings() {
 
   const [signatureName, setSignatureName] = useState('');
   const [signingId, setSigningId] = useState<string | null>(null);
+
+  const handleAIGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const projectCtx = newBriefing.projectId ? projects.find(p => p.id === newBriefing.projectId) : { name: "General Project", scope: newBriefing.title || "Daily Operations" };
+      let recentIncidentsStr = undefined;
+      
+      if (newBriefing.projectId) {
+         const reportsForProject = dailyReports.filter(r => r.projectId === newBriefing.projectId).sort((a,b) => b.date - a.date).slice(0, 5);
+         const incidents = reportsForProject.filter(r => r.incidents && r.incidents.trim() !== '').map(r => r.incidents);
+         if (incidents.length > 0) {
+           recentIncidentsStr = incidents.join('\n');
+         }
+      }
+
+      const generatedContent = await generateSafetyBriefingWithGemini(projectCtx, recentIncidentsStr);
+      setNewBriefing(prev => ({
+        ...prev,
+        content: generatedContent,
+        title: prev.title || 'AI Safety Briefing'
+      }));
+    } catch (err) {
+      console.error("AI Generation failed", err);
+      alert("Failed to generate briefing. Please check your API key, or enter content manually.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +178,13 @@ export function SafetyBriefings() {
                   <Input type="date" value={newBriefing.date} onChange={e => setNewBriefing({...newBriefing, date: e.target.value})} required />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Content or Document URL</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Content or Document URL</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAIGenerate} disabled={isGenerating} className="h-7 text-xs border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10">
+                      <Bot className="w-3 h-3 mr-1.5" />
+                      {isGenerating ? 'Generating...' : 'Generate with AI'}
+                    </Button>
+                  </div>
                   <textarea 
                     className="w-full min-h-[100px] rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-2 text-sm text-[#E5E5E5] focus:ring-1 focus:ring-[#D4AF37]"
                     value={newBriefing.content} 

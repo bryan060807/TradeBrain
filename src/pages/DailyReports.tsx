@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Card, CardHeader, CardTitle, CardContent, Input, Button, Label } from '../components/ui';
-import { FileText, Camera, Plus, Calendar, Clock, Package } from 'lucide-react';
+import { FileText, Camera, Plus, Calendar, Clock, Package, ShieldCheck } from 'lucide-react';
 import { db } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
 export function DailyReports() {
-  const { dailyReports, projects, activeProjectId, user } = useAppStore();
+  const { dailyReports, projects, activeProjectId, user, safetyBriefings } = useAppStore();
   const [isAdding, setIsAdding] = useState(false);
   const [filterProject, setFilterProject] = useState(activeProjectId || 'all');
   
@@ -16,6 +16,8 @@ export function DailyReports() {
     workCompleted: '',
     workerHours: '',
     materialsUsed: '',
+    incidents: '',
+    safetyBriefingId: '',
   });
 
   const dailyReportTemplates: Record<string, { work: string; materials: string; hours: string }> = {
@@ -75,6 +77,8 @@ export function DailyReports() {
         workCompleted: newReport.workCompleted,
         workerHours: Number(newReport.workerHours) || 0,
         materialsUsed: newReport.materialsUsed,
+        incidents: newReport.incidents || '',
+        safetyBriefingId: newReport.safetyBriefingId || '',
         photoUrls: photos,
         ownerId: user.uid,
         createdAt: Date.now()
@@ -85,6 +89,8 @@ export function DailyReports() {
         workCompleted: '',
         workerHours: '',
         materialsUsed: '',
+        incidents: '',
+        safetyBriefingId: '',
       });
       setPhotos([]);
       setIsAdding(false);
@@ -173,6 +179,30 @@ export function DailyReports() {
                   <Input value={newReport.materialsUsed} onChange={e => setNewReport({...newReport, materialsUsed: e.target.value})} placeholder="e.g. 40 sheets drywall" />
                 </div>
                 
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Safety Briefing (Optional)</Label>
+                  <select 
+                    className="w-full flex h-10 rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-2 text-sm text-[#E5E5E5] focus:ring-[#D4AF37]"
+                    value={newReport.safetyBriefingId}
+                    onChange={e => setNewReport({...newReport, safetyBriefingId: e.target.value})}
+                  >
+                    <option value="">None</option>
+                    {safetyBriefings.filter(b => b.projectId === newReport.projectId && newReport.projectId !== '').map(b => (
+                      <option key={b.id} value={b.id}>{b.title} ({new Date(b.date).toLocaleDateString()})</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Incidents / Notes (Optional)</Label>
+                  <textarea 
+                    className="w-full min-h-[60px] rounded-sm border border-white/20 bg-[#0A0A0A] px-3 py-2 text-sm text-[#E5E5E5] focus:ring-1 focus:ring-[#D4AF37]"
+                    value={newReport.incidents} 
+                    onChange={e => setNewReport({...newReport, incidents: e.target.value})} 
+                    placeholder="Describe any safety incidents or important notes..."
+                  />
+                </div>
+                
                 <div className="space-y-2 md:col-span-2 mt-2 pt-4 border-t border-white/5">
                   <Label className="flex justify-between items-center">
                     <span>Site Photos</span>
@@ -232,6 +262,20 @@ export function DailyReports() {
                    <div className="flex items-center gap-1.5 bg-[#0A0A0A] border border-white/10 px-2 py-1 rounded-sm"><Package className="w-3.5 h-3.5" /> {report.materialsUsed}</div>
                  )}
                </div>
+
+               {report.incidents && (
+                 <div className="mb-4 p-3 rounded-sm border border-red-500/20 bg-red-500/10 text-red-200 text-sm whitespace-pre-wrap">
+                   <strong className="font-semibold block mb-1">Incidents / Notes:</strong>
+                   {report.incidents}
+                 </div>
+               )}
+
+               {report.safetyBriefingId && safetyBriefings.find(b => b.id === report.safetyBriefingId) && (
+                 <div className="mb-4 p-3 rounded-sm border border-blue-500/20 bg-blue-500/10 text-blue-200 text-sm flex items-center gap-2">
+                   <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+                   <span>Safety Briefing Conducted: <strong>{safetyBriefings.find(b => b.id === report.safetyBriefingId)?.title}</strong></span>
+                 </div>
+               )}
 
                {report.photoUrls && report.photoUrls.length > 0 && (
                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x">

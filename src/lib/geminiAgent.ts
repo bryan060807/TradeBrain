@@ -80,8 +80,39 @@ const tools = [{
   ]
 }];
 
+export async function generateSafetyBriefingWithGemini(
+  projectContext: any,
+  recentIncidents?: string
+): Promise<string> {
+  try {
+    const prompt = `You are a construction safety expert. Write a detailed, practical safety briefing/toolbox talk for the following project context.
+Project Details:
+${JSON.stringify(projectContext, null, 2)}
+${recentIncidents ? `\nRecent Incidents/Notes to Address:\n${recentIncidents}` : ''}
+
+Include:
+1. Title of the briefing (on the first line).
+2. Identifying the main hazards based on project type and recent incidents.
+3. Clear, safe high-level explanations.
+4. Prohibited actions (what NOT to do).
+5. Correct protocols and required PPE.
+6. Reference common OSHA rules where relevant.
+Be professional, plainspoken, and practical. Do not use generic filler. Focus on field-useful advice.`;
+
+    const response = await getAi().models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt
+    });
+
+    return response.text || "No content generated.";
+  } catch (error: any) {
+    console.error("Gemini Error: ", error);
+    throw new Error(`Failed to generate briefing: ${error?.message || String(error)}`);
+  }
+}
+
 export async function handleVoiceCommandWithGemini(
-  transcript: string, 
+  transcript: string,
   context: any
 ): Promise<any[]> {
   try {
